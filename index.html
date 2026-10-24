@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>CREXZ Arcade</title>
+<meta name="description" content="A retro arcade in your hand. Original games by CREXZ Studios.">
+<meta name="author" content="CREXZ (CREXZ Studios)">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Arcade">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="preload" href="assets/PressStart2P-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="css/arcade.css">
+</head>
+<body>
+
+<!-- Power on: iPhone only plays sound after a tap, so the first tap starts the intro. -->
+<div id="power" class="screen">
+  <div class="power-msg">TAP TO START</div>
+</div>
+
+<!-- CREXZ Studios logo intro -->
+<div id="intro" class="screen hidden">
+  <img id="intro-logo" src="assets/logo.png" alt="CREXZ Studios">
+</div>
+
+<!-- The arcade hall -->
+<div id="hall" class="screen hidden">
+  <div class="room">
+    <div class="ceiling-lights"></div>
+    <div class="floor"></div>
+  </div>
+  <header class="hall-top">
+    <button id="btn-info" class="icon-btn" aria-label="About">?</button>
+    <h1 class="neon-sign"><span class="flicker">CREXZ</span> ARCADE</h1>
+    <button id="btn-mute" class="icon-btn mute-btn" aria-label="Sound on or off"></button>
+  </header>
+  <div id="cabinets" class="cabinets"></div>
+  <footer class="hall-bottom">
+    <button id="btn-prev" class="arrow-btn" aria-label="Previous cabinet">&#9664;</button>
+    <div id="dots" class="dots"></div>
+    <button id="btn-next" class="arrow-btn" aria-label="Next cabinet">&#9654;</button>
+  </footer>
+  <div class="hall-credit">&copy; CREXZ STUDIOS</div>
+</div>
+
+<!-- Insert coin -->
+<div id="coin" class="screen hidden">
+  <div class="coin-title" id="coin-title"></div>
+  <div class="coin-stage">
+    <div class="coin-sprite" id="coin-sprite"></div>
+    <div class="coin-slot"><div class="slot-hole"></div><div class="slot-label">25&cent;</div></div>
+  </div>
+  <div class="coin-msg" id="coin-msg">INSERT COIN</div>
+  <div class="coin-credit" id="coin-credit">CREDIT 00</div>
+  <div class="coin-free">FREE PLAY &middot; NO REAL MONEY</div>
+</div>
+
+<!-- A game being played -->
+<div id="play" class="screen hidden">
+  <div class="hud">
+    <button id="btn-exit" class="icon-btn" aria-label="Back to the arcade">&#9664;</button>
+    <div class="hud-score"><span class="lbl">SCORE</span><span id="hud-score">0</span></div>
+    <div class="hud-score"><span class="lbl">HI</span><span id="hud-hi">0</span></div>
+    <button id="btn-mute2" class="icon-btn mute-btn" aria-label="Sound on or off"></button>
+  </div>
+  <div id="stage" class="stage"><canvas id="game-canvas"></canvas></div>
+  <div id="overlay" class="overlay hidden"></div>
+</div>
+
+<!-- About / credits -->
+<div id="about" class="screen modal hidden">
+  <div class="panel">
+    <h2 class="neon-pink">CREXZ ARCADE</h2>
+    <p>A retro arcade in your hand.</p>
+    <p class="big">Created by<br><span class="neon-cyan">CREXZ</span><br>CREXZ STUDIOS</p>
+    <p class="small">Games, art, music and sound made for CREXZ by Claude. Every game here is original.</p>
+    <p class="small">Pixel font: Press Start 2P by CodeMan38 (SIL Open Font License).</p>
+    <p class="small">Free to play. No ads, no purchases.</p>
+    <button id="btn-about-close" class="pix-btn">OK</button>
+  </div>
+</div>
+
+<div class="scanlines"></div>
+
+<script src="js/audio.js"></script>
+<script src="js/scores.js"></script>
+<script src="js/pixel.js"></script>
+<script src="js/cabinets.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/games/starlance.js"></script>
+<script src="js/games/gloworm.js"></script>
+<script src="js/games/brickquake.js"></script>
+<script src="js/hall.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
