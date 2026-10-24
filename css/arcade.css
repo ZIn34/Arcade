@@ -339,38 +339,107 @@ button {
 .hall-credit { position: relative; z-index: 2; font-size: 7px; color: #6a5a80; padding-top: 4px; }
 
 /* ---------- insert coin ---------- */
-#coin { background: #000; z-index: 40; gap: 22px; padding: 20px; }
+#coin { background: #000; z-index: 40; gap: 20px; padding: 20px; padding-bottom: calc(var(--safe-bottom) + 110px); }
+.coin-back { position: absolute; left: 10px; top: calc(var(--safe-top) + 10px); }
 .coin-title { font-size: 16px; text-align: center; line-height: 1.5; color: #fff; text-shadow: 0 0 6px var(--pink), 0 0 16px var(--pink); }
-.coin-stage { position: relative; width: 140px; height: 210px; }
+.coin-stage { position: relative; width: 150px; height: 170px; display: flex; align-items: flex-end; justify-content: center; }
 .coin-sprite {
   position: absolute;
-  left: 38px; top: 0;
+  left: 43px; top: 0;
   width: 64px; height: 64px;
   image-rendering: pixelated;
   background-size: 100% 100%;
+  opacity: 0;
 }
-.coin-sprite.drop { animation: coin-drop .9s cubic-bezier(.5,0,.9,.6) forwards; }
+.coin-sprite.drop { animation: coin-drop .55s cubic-bezier(.5,0,.9,.6) forwards; }
 @keyframes coin-drop {
-  0% { transform: translateY(0) scaleX(1); }
-  25% { transform: translateY(20px) scaleX(.15); }
-  50% { transform: translateY(60px) scaleX(1); }
-  75% { transform: translateY(100px) scaleX(.15); opacity: 1; }
-  100% { transform: translateY(150px) scaleX(.1); opacity: 0; }
+  0% { transform: translateY(20px) scaleX(1); opacity: 1; }
+  50% { transform: translateY(60px) scaleX(.4); opacity: 1; }
+  100% { transform: translateY(95px) scaleX(.1) scaleY(.6); opacity: 0; }
 }
 .coin-slot {
-  position: absolute; left: 30px; bottom: 0;
-  width: 80px; height: 70px;
-  background: linear-gradient(#444, #222);
+  position: relative;
+  width: 110px; height: 120px;
+  background: linear-gradient(#4a4a4a, #222);
   border: 3px solid #777;
-  border-radius: 6px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  transition: transform .12s, box-shadow .12s;
 }
-.slot-hole { width: 8px; height: 34px; background: #000; border: 2px solid var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+.coin-slot.ready { animation: slot-pulse 1s ease-in-out infinite; }
+@keyframes slot-pulse { 50% { box-shadow: 0 0 22px rgba(255,214,60,.7); } }
+.coin-slot.over { transform: scale(1.08); box-shadow: 0 0 26px var(--yellow); border-color: var(--yellow); }
+.slot-hole { width: 10px; height: 48px; background: #000; border: 2px solid var(--yellow); box-shadow: 0 0 10px var(--yellow); }
 .coin-slot.flash .slot-hole { border-color: #fff; box-shadow: 0 0 22px #fff, 0 0 40px var(--yellow); }
 .slot-label { font-size: 8px; color: #aaa; }
-.coin-msg { font-size: 14px; color: var(--yellow); text-shadow: 0 0 8px var(--yellow); animation: blink .6s steps(1) infinite; }
+.coin-msg { font-size: 12px; line-height: 1.6; text-align: center; color: var(--yellow); text-shadow: 0 0 8px var(--yellow); animation: blink .9s steps(1) infinite; }
 .coin-credit { font-size: 12px; color: var(--green); text-shadow: 0 0 8px var(--green); }
-.coin-free { font-size: 7px; color: #666; }
+.coin-free { position: absolute; bottom: calc(var(--safe-bottom) + 8px); right: 12px; font-size: 7px; color: #666; }
+.coin-out { display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 10px; line-height: 1.8; text-align: center; color: #ddd; }
+.coin-out .neon-pink { font-size: 16px; }
+.coin-timer { font-size: 22px; color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
+
+/* the coin purse in the corner, and the coin you drag out of it */
+.coin-purse {
+  position: absolute;
+  left: 14px; bottom: calc(var(--safe-bottom) + 18px);
+  display: flex; align-items: center; gap: 10px;
+}
+.purse-coin {
+  width: 72px; height: 72px;
+  image-rendering: pixelated;
+  background-size: 100% 100%;
+  filter: drop-shadow(0 0 8px rgba(255,214,60,.6));
+  touch-action: none;
+  cursor: grab;
+}
+.purse-coin.empty { filter: grayscale(1) brightness(.4); }
+.purse-count { font-size: 16px; color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
+.drag-coin {
+  position: fixed; z-index: 45;
+  width: 72px; height: 72px; margin: -36px 0 0 -36px;
+  image-rendering: pixelated;
+  background-size: 100% 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.7)) drop-shadow(0 0 10px rgba(255,214,60,.6));
+}
+.drag-coin.back { transition: left .25s ease-out, top .25s ease-out; }
+/* a see-through coin that shows where to drag */
+.coin-hint {
+  position: fixed; z-index: 41;
+  width: 56px; height: 56px; margin: -28px 0 0 -28px;
+  image-rendering: pixelated;
+  background-size: 100% 100%;
+  pointer-events: none;
+  opacity: 0;
+}
+.coin-hint.on { animation: coin-hint 1.8s ease-in-out infinite; }
+@keyframes coin-hint {
+  0% { left: var(--hx0); top: var(--hy0); opacity: 0; }
+  15% { opacity: .55; }
+  70% { left: var(--hx1); top: var(--hy1); opacity: .55; }
+  100% { left: var(--hx1); top: var(--hy1); opacity: 0; }
+}
+
+/* coin counter in the hall */
+.hall-coins {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 12px; color: var(--yellow); text-shadow: 0 0 6px var(--yellow);
+  padding-top: 8px;
+}
+.coin-ico {
+  width: 18px; height: 18px;
+  image-rendering: pixelated;
+  background-size: 100% 100%;
+  background-image: var(--coin-img);
+}
+.hall-coins-note { font-size: 7px; color: #887; text-shadow: none; }
+.coins-won { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
+.coins-won .coin-ico { width: 24px; height: 24px; }
+.overlay p.small-note { font-size: 7px; color: #888; }
+.overlay p.coins-left { font-size: 8px; color: var(--yellow); margin-top: -8px; }
+.pix-btn:disabled { background: #333; color: #777; border-bottom-color: #111; box-shadow: none; }
 
 /* ---------- playing ---------- */
 #play { background: #000; z-index: 30; justify-content: flex-start; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
@@ -399,11 +468,15 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 20px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
   text-align: center;
+  overflow-y: auto;
 }
+/* centred when it fits, scrollable from the top when it doesn't (small phones) */
+.overlay > :first-child { margin-top: auto; }
+.overlay > :last-child { margin-bottom: auto; }
 .overlay h2 { font-size: 20px; font-weight: normal; line-height: 1.4; }
 .overlay p { font-size: 10px; line-height: 1.8; color: #ddd; max-width: 300px; }
 .overlay ul { list-style: none; font-size: 10px; line-height: 2; color: #ddd; text-align: left; max-width: 300px; }

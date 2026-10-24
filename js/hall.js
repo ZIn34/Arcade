@@ -129,52 +129,147 @@ const Hall = (() => {
     insertCoin(cab);
   }
 
-  // The insert coin moment: the coin spins, drops into the slot, the credit counter ticks up, then the game starts.
+  // ---- insert coin: drag a coin from the purse in the corner into the slot ----
+  const COIN_URL = Pixel.bake(Pixel.COIN, Pixel.COIN_PAL, 1).toDataURL();
+  document.documentElement.style.setProperty("--coin-img", `url(${COIN_URL})`);
+  ["coin-sprite", "purse-coin", "drag-coin", "coin-hint"].forEach(id => { $(id).style.backgroundImage = `url(${COIN_URL})`; });
+
+  let coinCab = null, coinState = "idle", timerTick = 0, dragId = null;
+  const scr = $("coin"), slot = $("coin-slot"), purse = $("purse-coin"), dragEl = $("drag-coin"), hint = $("coin-hint");
+
+  function showCoins() {
+    const n = Coins.count();
+    $("hall-coins").textContent = "x " + n;
+    $("hall-coins-note").textContent = n === 0 ? "MORE IN " + Coins.countdown() : "";
+    $("purse-count").textContent = "x" + n;
+    purse.classList.toggle("empty", n === 0);
+  }
+  Coins.onChange(showCoins);
+  setInterval(() => {
+    if (!$("hall").classList.contains("hidden") || !scr.classList.contains("hidden")) showCoins();
+    if (coinState === "out") { $("coin-timer").textContent = Coins.countdown(); if (Coins.count() > 0) openCoinScreen(coinCab); }
+  }, 1000);
+
+  function openCoinScreen(cab) {
+    coinCab = cab;
+    $("coin-title").textContent = cab.name.replace("\n", " ");
+    $("coin-title").style.textShadow = `0 0 6px ${cab.c}, 0 0 16px ${cab.c}`;
+    $("coin-credit").textContent = "CREDIT 00";
+    $("coin-sprite").classList.remove("drop");
+    slot.classList.remove("flash", "over");
+    dragEl.classList.add("hidden");
+    scr.classList.remove("hidden");
+    showCoins();
+    const n = Coins.count();
+    coinState = n > 0 ? "waiting" : "out";
+    $("coin-out").classList.toggle("hidden", n > 0);
+    $("coin-msg").classList.toggle("hidden", n === 0);
+    $("coin-credit").classList.toggle("hidden", n === 0);
+    $("coin-msg").textContent = "DRAG A COIN INTO THE SLOT";
+    $("coin-timer").textContent = Coins.countdown();
+    slot.classList.toggle("ready", n > 0);
+    // the see-through coin shows the way from the purse to the slot
+    requestAnimationFrame(() => {
+      const p = purse.getBoundingClientRect(), s = slot.getBoundingClientRect();
+      hint.style.setProperty("--hx0", p.left + p.width / 2 + "px");
+      hint.style.setProperty("--hy0", p.top + p.height / 2 + "px");
+      hint.style.setProperty("--hx1", s.left + s.width / 2 + "px");
+      hint.style.setProperty("--hy1", s.top + s.height / 2 + "px");
+      hint.classList.toggle("on", n > 0);
+    });
+  }
+
   function insertCoin(cab) {
     Sound.play("select");
     Sound.stopMusic();
-    const scr = $("coin");
-    $("coin-title").textContent = cab.name.replace("\n", " ");
-    $("coin-title").style.textShadow = `0 0 6px ${cab.c}, 0 0 16px ${cab.c}`;
-    $("coin-msg").textContent = "INSERT COIN";
-    $("coin-credit").textContent = "CREDIT 00";
-    const sprite = $("coin-sprite");
-    sprite.style.backgroundImage = `url(${Pixel.bake(Pixel.COIN, Pixel.COIN_PAL, 1).toDataURL()})`;
-    sprite.classList.remove("drop");
-    const slot = scr.querySelector(".coin-slot");
-    slot.classList.remove("flash");
-    scr.classList.remove("hidden");
+    openCoinScreen(cab);
+  }
 
-    let done = false;
-    const timers = [];
-    const go = () => {
-      if (done) return;
-      done = true;
-      timers.forEach(clearTimeout);
-      scr.removeEventListener("click", go);
-      scr.classList.add("hidden");
-      Shell.open(cab, backToHall);
-    };
-    timers.push(setTimeout(() => { void sprite.offsetWidth; sprite.classList.add("drop"); }, 250));
-    timers.push(setTimeout(() => { Sound.play("coin"); slot.classList.add("flash"); }, 1050));
-    timers.push(setTimeout(() => {
+  function overSlot(x, y) {
+    const r = slot.getBoundingClientRect(), pad = 40;
+    return x > r.left - pad && x < r.right + pad && y > r.top - pad && y < r.bottom + pad;
+  }
+  function placeDrag(x, y) { dragEl.style.left = x + "px"; dragEl.style.top = y + "px"; }
+
+  purse.addEventListener("pointerdown", e => {
+    if (coinState !== "waiting" || Coins.count() <= 0) { if (coinState === "out") Sound.play("lose"); return; }
+    e.preventDefault();
+    dragId = e.pointerId;
+    try { purse.setPointerCapture(e.pointerId); } catch (_) {}
+    coinState = "dragging";
+    hint.classList.remove("on");
+    dragEl.classList.remove("hidden", "back");
+    placeDrag(e.clientX, e.clientY);
+    Sound.play("move");
+  });
+  purse.addEventListener("pointermove", e => {
+    if (coinState !== "dragging" || e.pointerId !== dragId) return;
+    placeDrag(e.clientX, e.clientY);
+    slot.classList.toggle("over", overSlot(e.clientX, e.clientY));
+  });
+  const release = e => {
+    if (coinState !== "dragging" || e.pointerId !== dragId) return;
+    dragId = null;
+    slot.classList.remove("over");
+    if (overSlot(e.clientX, e.clientY) && Coins.spend()) {
+      coinIn();
+    } else {
+      // not over the slot: the coin slides back to the purse
+      coinState = "waiting";
+      const p = purse.getBoundingClientRect();
+      dragEl.classList.add("back");
+      placeDrag(p.left + p.width / 2, p.top + p.height / 2);
+      setTimeout(() => { dragEl.classList.add("hidden"); dragEl.classList.remove("back"); hint.classList.add("on"); }, 260);
+      Sound.play("back");
+    }
+  };
+  purse.addEventListener("pointerup", release);
+  purse.addEventListener("pointercancel", release);
+
+  // The coin drops into the slot, the credit ticks up, then the game starts.
+  function coinIn() {
+    coinState = "in";
+    dragEl.classList.add("hidden");
+    const sprite = $("coin-sprite");
+    void sprite.offsetWidth;
+    sprite.classList.add("drop");
+    slot.classList.remove("ready");
+    slot.classList.add("flash");
+    Sound.play("coin");
+    showCoins();
+    setTimeout(() => {
       Sound.play("credit");
       $("coin-credit").textContent = "CREDIT 01";
       $("coin-msg").textContent = "PLAYER 1 READY!";
-    }, 1400));
-    timers.push(setTimeout(go, 2300));
-    // A tap hurries it along once the coin is in.
-    setTimeout(() => scr.addEventListener("click", go), 1100);
+    }, 350);
+    setTimeout(() => {
+      if (coinState !== "in") return;
+      coinState = "idle";
+      scr.classList.add("hidden");
+      Shell.open(coinCab, backToHall);
+    }, 1200);
   }
+
+  $("btn-coin-back").addEventListener("click", () => {
+    if (coinState === "in") return;
+    coinState = "idle";
+    hint.classList.remove("on");
+    dragEl.classList.add("hidden");
+    scr.classList.add("hidden");
+    Sound.play("back");
+    backToHall();
+  });
 
   function backToHall() {
     refreshScreens();
+    showCoins();
     Sound.playMusic("hall");
   }
 
   function show() {
     $("hall").classList.remove("hidden");
     shownAt = performance.now();
+    showCoins();
     const saved = parseInt(localStorage.getItem("crexz-arcade.cabinet") || "0", 10) || 0;
     requestAnimationFrame(() => {
       const c = cards[Math.min(saved, cards.length - 1)].card;

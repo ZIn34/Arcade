@@ -1,6 +1,6 @@
 // Keeps a copy of the whole arcade on the phone so it opens offline.
 // Bump VERSION whenever any file changes, so phones fetch the new copy.
-const VERSION = "arcade-v6";
+const VERSION = "arcade-v7";
 const FILES = [
   "./",
   "index.html",
@@ -8,6 +8,7 @@ const FILES = [
   "css/arcade.css",
   "js/audio.js",
   "js/scores.js",
+  "js/coins.js",
   "js/pixel.js",
   "js/cabinets.js",
   "js/shell.js",

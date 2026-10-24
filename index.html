@@ -41,6 +41,7 @@
     <h1 class="neon-sign"><span class="flicker">CREXZ</span> ARCADE</h1>
     <button id="btn-mute" class="icon-btn mute-btn" aria-label="Sound on or off"></button>
   </header>
+  <div class="hall-coins"><i class="coin-ico"></i><span id="hall-coins">0</span><span class="hall-coins-note" id="hall-coins-note"></span></div>
   <div id="cabinets" class="cabinets"></div>
   <footer class="hall-bottom">
     <button id="btn-prev" class="arrow-btn" aria-label="Previous cabinet">&#9664;</button>
@@ -52,15 +53,27 @@
 
 <!-- Insert coin -->
 <div id="coin" class="screen hidden">
+  <button id="btn-coin-back" class="icon-btn coin-back" aria-label="Back to the arcade">&#9664;</button>
   <div class="coin-title" id="coin-title"></div>
+  <div class="coin-msg" id="coin-msg">DRAG A COIN INTO THE SLOT</div>
   <div class="coin-stage">
+    <div class="coin-slot" id="coin-slot"><div class="slot-hole"></div><div class="slot-label">1 COIN</div></div>
     <div class="coin-sprite" id="coin-sprite"></div>
-    <div class="coin-slot"><div class="slot-hole"></div><div class="slot-label">25&cent;</div></div>
   </div>
-  <div class="coin-msg" id="coin-msg">INSERT COIN</div>
   <div class="coin-credit" id="coin-credit">CREDIT 00</div>
-  <div class="coin-free">FREE PLAY &middot; NO REAL MONEY</div>
+  <div class="coin-out hidden" id="coin-out">
+    <div class="neon-pink">OUT OF COINS</div>
+    <div>COME BACK TOMORROW FOR<br>4 FREE COINS</div>
+    <div class="coin-timer" id="coin-timer">00:00:00</div>
+  </div>
+  <div class="coin-hint" id="coin-hint"></div>
+  <div class="coin-purse" id="coin-purse">
+    <div class="purse-coin" id="purse-coin"></div>
+    <div class="purse-count" id="purse-count">x0</div>
+  </div>
+  <div class="coin-free">4 FREE COINS EVERY DAY</div>
 </div>
+<div class="drag-coin hidden" id="drag-coin"></div>
 
 <!-- A game being played -->
 <div id="play" class="screen hidden">
@@ -82,7 +95,7 @@
     <p class="big">Created by<br><span class="neon-cyan">CREXZ</span><br>CREXZ STUDIOS</p>
     <p class="small">Games, art, music and sound made for CREXZ by Claude. Every game here is original.</p>
     <p class="small">Pixel font: Press Start 2P by CodeMan38 (SIL Open Font License).</p>
-    <p class="small">Free to play. No ads, no purchases.</p>
+    <p class="small">4 free coins every day, and you win coins back with good scores. No ads.</p>
     <button id="btn-about-close" class="pix-btn">OK</button>
   </div>
 </div>
@@ -91,6 +104,7 @@
 
 <script src="js/audio.js"></script>
 <script src="js/scores.js"></script>
+<script src="js/coins.js"></script>
 <script src="js/pixel.js"></script>
 <script src="js/cabinets.js"></script>
 <script src="js/shell.js"></script>

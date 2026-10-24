@@ -126,9 +126,12 @@ const Shell = (() => {
     Sound.stopMusic();
     Sound.play("gameover");
     const score = host.score;
+    // coins back for the score
+    won = Coins.earned(cab.id, score);
+    Coins.add(won);
     overlay.innerHTML = "";
     overlay.classList.remove("hidden");
-    overlay.append(el("h2", { class: "neon-pink", text: "GAME OVER" }), el("p", { text: "SCORE " + score }));
+    overlay.append(el("h2", { class: "neon-pink", text: "GAME OVER" }), el("p", { text: "SCORE " + score }), coinsWon());
     if (Scores.qualifies(cab.id, score)) {
       setTimeout(() => askInitials(score), 700);
     } else {
@@ -188,15 +191,33 @@ const Shell = (() => {
       ]);
       ol.append(li);
     }
+    const have = Coins.count();
+    const again = button(have > 0 ? "PLAY AGAIN · 1 COIN" : "OUT OF COINS", "", () => {
+      if (!Coins.spend()) return;
+      Sound.play("coin");
+      start();
+    });
+    again.disabled = have <= 0;
     overlay.append(
       el("h2", { class: "neon-pink", text: "GAME OVER" }),
       el("p", { text: "SCORE " + (host ? host.score : 0) }),
+      coinsWon(),
       el("div", { class: "scores-title", text: "HIGH SCORES" }),
       ol,
-      button("PLAY AGAIN", "", () => start()),
+      again,
+      el("p", { class: "coins-left", text: have > 0 ? "YOU HAVE " + have + (have === 1 ? " COIN" : " COINS") : "4 FREE COINS IN " + Coins.countdown() }),
       button("BACK TO ARCADE", "alt", exit)
     );
     $("hud-hi").textContent = Scores.best(cab.id);
+  }
+
+  // "+3 COINS" with a coin picture, and how many points a coin takes in this game
+  let won = 0;
+  function coinsWon() {
+    const box = el("div", { class: "coins-won" }, [el("i", { class: "coin-ico" }), el("span", { text: "+" + won + (won === 1 ? " COIN" : " COINS") })]);
+    const wrap = el("div", {}, [box, el("p", { class: "small-note", text: "1 COIN PER " + Coins.every(cab.id).toLocaleString("en-US") + " POINTS" })]);
+    wrap.style.display = "flex"; wrap.style.flexDirection = "column"; wrap.style.alignItems = "center"; wrap.style.gap = "4px";
+    return wrap;
   }
 
   function exit() {
