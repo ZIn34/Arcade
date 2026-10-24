@@ -91,7 +91,8 @@ const Shell = (() => {
     if (!running) return;
     raf = requestAnimationFrame(frame);
     if (paused) { last = now; return; }
-    const dt = Math.min(0.05, (now - last) / 1000);
+    // The frame's timestamp can be a touch earlier than when the game started, so never step backwards.
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     inst.update(dt);
     if (running) inst.draw(g, W, H);

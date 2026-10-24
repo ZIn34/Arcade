@@ -75,5 +75,24 @@ const Kit = (() => {
     for (let i = 0; i < n; i++) g.drawImage(icon, x + i * (icon.width + 4), y);
   }
 
-  return { rand, irand, clamp, pick, hit, particles, text, banner, lives };
+  // Turns finger movement into swipes: calls onSwipe("up" | "down" | "left" | "right") each time the
+  // finger travels `min` pixels, so you can keep steering without lifting. A short touch with no
+  // travel counts as a tap (onTap), if given.
+  function swiper(onSwipe, onTap, min = 18) {
+    let start = null, moved = false;
+    return {
+      down(x, y) { start = { x, y }; moved = false; },
+      move(x, y) {
+        if (!start) return;
+        const dx = x - start.x, dy = y - start.y;
+        if (Math.abs(dx) < min && Math.abs(dy) < min) return;
+        moved = true;
+        onSwipe(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
+        start = { x, y };
+      },
+      up() { if (start && !moved && onTap) onTap(start.x, start.y); start = null; },
+    };
+  }
+
+  return { rand, irand, clamp, pick, hit, particles, text, banner, lives, swiper };
 })();
