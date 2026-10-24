@@ -77,6 +77,7 @@ const Shell = (() => {
     };
     setScoreText(0);
     $("hud-hi").textContent = Scores.best(cab.id);
+    if (inst && inst.destroy) inst.destroy(); // tidy up the last round (e.g. tilt listeners)
     inst = game.create(host);
     if (inst.resize) inst.resize(W, H);
     running = true; paused = false;
