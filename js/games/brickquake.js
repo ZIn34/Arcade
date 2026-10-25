@@ -23,6 +23,14 @@
 
   Arcade.addGame("brickquake", {
     music: "brickquake",
+    deck: { stick: true, buttons: [{ id: "a", label: "LAUNCH", color: "#ff8a3c" }] },
+    arcadeHowTo: [
+      "JOYSTICK: SLIDE THE PADDLE",
+      "LAUNCH: SEND THE BALL",
+      "BREAK EVERY BRICK",
+      "QUAKES DROP THE WALL LOWER",
+      "CATCH W, M, S AND + CAPSULES",
+    ],
     howTo: [
       "DRAG TO SLIDE THE PADDLE",
       "LET GO TO LAUNCH THE BALL",
@@ -66,7 +74,7 @@
         baseSpeed = H * (0.62 + Math.min(0.5, (level - 1) * 0.07));
         caps = [];
         resetBall();
-        banner.show("LEVEL " + level, level === 1 ? "LET GO TO LAUNCH" : "QUAKES EVERY " + Math.round(quakeEvery) + "S", "#fff", "#ff8a3c", 1.8);
+        banner.show("LEVEL " + level, level === 1 ? (host.arcade ? "PRESS LAUNCH" : "LET GO TO LAUNCH") : "QUAKES EVERY " + Math.round(quakeEvery) + "S", "#fff", "#ff8a3c", 1.8);
         host.tempo = Math.min(1.4, 1 + (level - 1) * 0.06);
         Sound.setTempo(host.tempo);
       }
@@ -117,6 +125,8 @@
         const targetW = pad.wideT > 0 ? pad.baseW * 1.5 : pad.baseW;
         pad.w += (targetW - pad.w) * Math.min(1, dt * 8);
         if (aim != null) pad.x = Kit.clamp(aim - pad.w / 2, 0, W - pad.w);
+        // Arcade mode: the joystick slides the paddle
+        if (host.arcade && host.pad.x) pad.x = Kit.clamp(pad.x + host.pad.x * 720 * dt, 0, W - pad.w);
 
         if (!balls.some(b => b.stuck)) {
           quakeT -= dt;
@@ -259,11 +269,12 @@
         g.fillRect(56, 12, (W - 140) * frac, 8);
         Kit.text(g, "LV " + level, W - 8, 16, 8, "#ffd63c", "right");
         for (let i = 0; i < lives; i++) { g.fillStyle = "#ff8a3c"; g.fillRect(8 + i * 22, H - 16, 18, 6); }
-        if (balls.some(b => b.stuck) && !over && Math.floor(t * 2) % 2) Kit.text(g, "LET GO TO LAUNCH", W / 2, pad.y + 36, 8, "#ddd");
+        if (balls.some(b => b.stuck) && !over && Math.floor(t * 2) % 2) Kit.text(g, (host.arcade ? "PRESS LAUNCH" : "LET GO TO LAUNCH"), W / 2, pad.y + 36, 8, "#ddd");
         banner.draw(g, W, H);
       }
 
       function down(x) { held = true; aim = x; }
+      function arcade(ev) { if (ev.type === "down" && ev.id === "a") launch(); }
       function move(x) { if (held) aim = x; }
       function up() { held = false; aim = null; launch(); }
       function resize(w, h) {
@@ -278,7 +289,7 @@
       const state = () => ({ level, lives, quakeEvery, baseSpeed, bricks: bricks.length, over,
         lowestRow: Math.max(-1, ...bricks.map(b => b.r)),
         balls: balls.map(b => ({ x: b.x, y: b.y, vy: b.vy, stuck: b.stuck })), pad: { x: pad.x, w: pad.w, y: pad.y } });
-      return { update, draw, down, move, up, resize, state };
+      return { update, draw, down, move, up, arcade, resize, state };
     },
   });
 })();

@@ -30,6 +30,14 @@
 
   Arcade.addGame("turbolane", {
     music: "turbolane",
+    deck: { stick: true, buttons: [] },
+    arcadeHowTo: [
+      "JOYSTICK: STEER",
+      "DODGE THE TRAFFIC",
+      "SKIM PAST CARS FOR CLOSE CALL BONUSES",
+      "GRAB FUEL CANS BEFORE YOU RUN DRY",
+      "3 CARS. THE ROAD KEEPS SPEEDING UP",
+    ],
     howTo: [
       "DRAG ANYWHERE TO STEER",
       "DODGE THE TRAFFIC",
@@ -84,6 +92,8 @@
         fx.update(dt); banner.update(dt);
         if (over) { overT -= dt; if (overT <= 0) host.gameOver(); return; }
         invuln = Math.max(0, invuln - dt);
+        // Arcade mode: the joystick steers
+        if (host.arcade && host.pad.x) car.x = Kit.clamp(car.x + host.pad.x * 460 * dt, roadX + 2, roadX + roadW - car.w - 2);
         const top = Math.min(820, 240 + dist * 0.06);
         speed += (top - speed) * Math.min(1, dt * 0.8);
         dist += speed * dt * 0.1;

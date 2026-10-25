@@ -34,6 +34,15 @@
 
   Arcade.addGame("duckdash", {
     music: "duckdash",
+    deck: { stick: true, buttons: [{ id: "a", label: "HOP", color: "#ffd63c" }] },
+    arcadeHowTo: [
+      "JOYSTICK: HOP ANY WAY (HOLD TO KEEP HOPPING)",
+      "HOP: HOP FORWARD",
+      "DODGE CARS, TRAINS AND BOATS",
+      "WATER IS SAFE BUT THE CURRENT PULLS",
+      "PICK UP DUCKLINGS FOR MORE POINTS",
+      "KEEP MOVING OR THE HAWK SWOOPS",
+    ],
     howTo: [
       "TAP TO HOP FORWARD",
       "SWIPE LEFT, RIGHT OR DOWN TO HOP THAT WAY",
@@ -188,6 +197,7 @@
         if (over) { overT -= dt; if (overT <= 0) host.gameOver(); return; }
         if (dead > 0) { dead -= dt; if (dead <= 0) respawn(); return; }
         invuln = Math.max(0, invuln - dt);
+        arcadeHold(dt);
         while (genRow < camY + H / C + 10) addLane();
 
         // trains
@@ -358,12 +368,25 @@
         for (let i = 0; i < lives; i++) g.drawImage(duckImg[0], 6 + i * (duckImg[0].width * 0.7 + 4), 4, duckImg[0].width * 0.7, duckImg[0].height * 0.7);
         Kit.text(g, best + " STEPS", W - 6, 12, 8, "#fff", "right");
         if (chicks) Kit.text(g, "x" + (1 + chicks), W - 6, 26, 8, "#ffd63c", "right");
-        if (!started && Math.floor(t * 2) % 2 === 0) Kit.text(g, "TAP TO HOP", W / 2, H * 0.45, 12, "#fff", "center", "#ffd63c");
+        if (!started && Math.floor(t * 2) % 2 === 0) Kit.text(g, host.arcade ? "PRESS HOP" : "TAP TO HOP", W / 2, H * 0.45, 12, "#fff", "center", "#ffd63c");
         banner.draw(g, W, H);
       }
 
       const DIRV = { up: [0, 1], down: [0, -1], left: [-1, 0], right: [1, 0] };
       const swipe = Kit.swiper(d => hop(...DIRV[d]), () => hop(0, 1), 22);
+      // Arcade mode: push the joystick to hop that way (hold to keep hopping); HOP hops forward
+      let repeatT = 0;
+      function arcade(ev) {
+        if (ev.type === "dir" && ev.dir) { hop(...DIRV[ev.dir]); repeatT = 0.24; }
+        if (ev.type === "down" && ev.id === "a") { hop(0, 1); repeatT = 0.24; }
+      }
+      function arcadeHold(dt) {
+        if (!host.arcade) return;
+        const d = host.pad.dir || (host.pad.held.a ? "up" : null);
+        if (!d) return;
+        repeatT -= dt;
+        if (repeatT <= 0) { hop(...DIRV[d]); repeatT = 0.2; }
+      }
 
       const state = () => ({ best, lives, chicks, camY, dead: dead > 0, over, started,
         duck: { col: Math.round(duck.x), x: duck.x, row: duck.row, hopping: duck.hopT > 0 },
@@ -379,7 +402,7 @@
         if (lane && lane.type === "grass" && lane.bushes.has(col)) return false;
         return !h;
       }
-      return { update, draw, down: swipe.down, move: swipe.move, up: swipe.up, state, safeIn,
+      return { update, draw, down: swipe.down, move: swipe.move, up: swipe.up, arcade, state, safeIn,
         resize(w, h) { W = w; H = h; C = Math.floor(W / COLS); ox = Math.floor((W - C * COLS) / 2); } };
     },
   });

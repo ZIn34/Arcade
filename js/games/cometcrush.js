@@ -56,6 +56,14 @@
 
   Arcade.addGame("cometcrush", {
     music: "cometcrush",
+    deck: { stick: true, buttons: [{ id: "a", label: "FIRE", color: "#ff3c50" }, { id: "b", label: "THRUST", color: "#ff8a3c" }] },
+    arcadeHowTo: [
+      "JOYSTICK LEFT/RIGHT: TURN",
+      "JOYSTICK UP OR THRUST: FLY",
+      "FIRE: SHOOT",
+      "BIG COMETS CRACK INTO SMALL ONES",
+      "GRAB CRYSTALS TO COOL YOUR GUN",
+    ],
     howTo: [
       "◀ ▶ TURN YOUR SHIP",
       "THRUST TO FLY, FIRE TO SHOOT",
@@ -67,9 +75,9 @@
       let W = host.W, H = host.H;
       let PH, buttons;
       function layout() {
-        PH = H - 112; // play area; the button bar is below
+        PH = host.arcade ? H : H - 112; // play area; the button bar is below (Arcade mode uses the deck instead)
         const bw = Math.floor((W - 50) / 4), bh = 84, y = PH + 18;
-        buttons = [
+        buttons = host.arcade ? [] : [
           { id: "left", label: "◀", x: 10, y, w: bw, h: bh, color: "#3cf0ff" },
           { id: "right", label: "▶", x: 20 + bw, y, w: bw, h: bh, color: "#3cf0ff" },
           { id: "thrust", label: "THRUST", x: W - 20 - bw * 2, y, w: bw, h: bh, color: "#ff8a3c" },
@@ -252,7 +260,8 @@
         g.fillStyle = hot ? (Math.floor(t * 8) % 2 ? "#fff" : "#ff3c50") : heat > 0.7 ? "#ff8a3c" : "#4dff7a";
         g.fillRect(W / 2 - 40, 8, 90 * heat, 8);
 
-        // the button bar
+        // the button bar (not in Arcade mode, where the deck takes over)
+        if (!host.arcade) {
         g.fillStyle = "#0a0614"; g.fillRect(0, PH, W, H - PH);
         g.fillStyle = "#3a1060"; g.fillRect(0, PH, W, 3);
         for (const b of buttons) {
@@ -261,6 +270,7 @@
           g.fillRect(b.x, b.y, b.w, b.h);
           g.strokeStyle = b.color; g.lineWidth = 2; g.strokeRect(b.x + 1, b.y + 1, b.w - 2, b.h - 2);
           Kit.text(g, b.label, b.x + b.w / 2, b.y + b.h / 2 + 1, b.label.length > 2 ? 9 : 22, on ? "#000" : b.color);
+        }
         }
         banner.draw(g, W, PH);
       }
@@ -277,9 +287,15 @@
       function down(x, y, id) { const b = buttonAt(x, y); touches.set(id, b); refreshHeld(); if (b) Sound.play("move"); }
       function move(x, y, id) { if (!touches.has(id)) return; touches.set(id, buttonAt(x, y)); refreshHeld(); }
       function up(x, y, id) { touches.delete(id); refreshHeld(); }
+      // Arcade mode: joystick left/right turns, up thrusts; FIRE fires, THRUST thrusts
+      function arcade() {
+        const p = host.pad;
+        held.left = p.dir === "left"; held.right = p.dir === "right";
+        held.fire = !!p.held.a; held.thrust = p.dir === "up" || !!p.held.b;
+      }
 
       const state = () => ({ wave, lives, comets: comets.map(c => ({ x: c.x, y: c.y, r: c.r, vx: c.vx, vy: c.vy, kind: c.kind })), ship: { ...ship }, heat, hot, dead: dead > 0, over, buttons, held: { ...held } });
-      return { update, draw, down, move, up, state, resize(w, h) { W = w; H = h; layout(); } };
+      return { update, draw, down, move, up, arcade, state, resize(w, h) { W = w; H = h; layout(); } };
     },
   });
 })();

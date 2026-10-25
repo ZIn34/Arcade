@@ -43,6 +43,9 @@
   </header>
   <div class="hall-coins"><i class="coin-ico"></i><span id="hall-coins">0</span><span class="hall-coins-note" id="hall-coins-note"></span>
     <button id="btn-days" class="days-btn" aria-label="Most coins in a day">&#9733; BEST DAYS</button></div>
+  <div class="mode-switch" role="group" aria-label="Controls">
+    <button id="mode-normal" class="mode-opt">NORMAL</button><button id="mode-arcade" class="mode-opt">ARCADE</button>
+  </div>
   <div id="cabinets" class="cabinets"></div>
   <footer class="hall-bottom">
     <button id="btn-prev" class="arrow-btn" aria-label="Previous cabinet">&#9664;</button>
@@ -85,6 +88,11 @@
     <button id="btn-mute2" class="icon-btn mute-btn" aria-label="Sound on or off"></button>
   </div>
   <div id="stage" class="stage"><canvas id="game-canvas"></canvas></div>
+  <!-- Arcade mode: the control deck -->
+  <div id="deck" class="deck hidden">
+    <div class="deck-stick"><div class="stick-base" id="stick-base"><div class="stick-shaft"></div><div class="stick-knob" id="stick-knob"></div></div></div>
+    <div class="deck-buttons" id="deck-buttons"></div>
+  </div>
   <div id="overlay" class="overlay hidden"></div>
 </div>
 
@@ -119,6 +127,7 @@
 <script src="js/coins.js"></script>
 <script src="js/pixel.js"></script>
 <script src="js/cabinets.js"></script>
+<script src="js/deck.js"></script>
 <script src="js/shell.js"></script>
 <script src="js/kit.js"></script>
 <script src="js/games/starlance.js"></script>

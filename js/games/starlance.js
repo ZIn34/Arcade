@@ -54,6 +54,14 @@
 
   Arcade.addGame("starlance", {
     music: "starlance",
+    deck: { stick: true, buttons: [{ id: "a", label: "FIRE", color: "#ff3c50" }] },
+    arcadeHowTo: [
+      "JOYSTICK: FLY YOUR SHIP",
+      "HOLD FIRE TO SHOOT",
+      "DODGE DRONES AND THEIR SHOTS",
+      "GRAB 2, R AND S FOR POWER",
+      "3 SHIPS. WAVES GET TOUGHER",
+    ],
     howTo: [
       "DRAG ANYWHERE TO FLY",
       "YOUR SHIP FIRES BY ITSELF",
@@ -134,10 +142,16 @@
         if (ship.dead) { deadT -= dt; if (deadT <= 0) host.gameOver(); return; }
 
         invuln = Math.max(0, invuln - dt);
+        // Arcade mode: the joystick flies the ship
+        if (host.arcade && (host.pad.x || host.pad.y)) {
+          ship.x = Kit.clamp(ship.x + host.pad.x * 380 * dt, 0, W - ship.w);
+          ship.y = Kit.clamp(ship.y + host.pad.y * 380 * dt, H * 0.45, H - ship.h - 30);
+        }
         twin = Math.max(0, twin - dt); rapid = Math.max(0, rapid - dt); shield = Math.max(0, shield - dt);
 
         fireT -= dt;
-        if (fireT <= 0) { fire(); fireT = rapid > 0 ? 0.11 : 0.24; }
+        // fires by itself, or in Arcade mode while FIRE is held
+        if (fireT <= 0 && (!host.arcade || host.pad.held.a)) { fire(); fireT = rapid > 0 ? 0.11 : 0.24; }
 
         if (!enemies.length) {
           nextWaveT -= dt;

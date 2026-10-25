@@ -30,6 +30,14 @@
 
   Arcade.addGame("skyhopper", {
     music: "skyhopper",
+    deck: { stick: true, buttons: [] },
+    arcadeHowTo: [
+      "JOYSTICK: STEER BOING",
+      "LAND ON PLATFORMS TO BOUNCE UP",
+      "BROWN ONES CRUMBLE, YELLOW PADS LAUNCH",
+      "BOUNCE ON MINES, DON'T BUMP THEM",
+      "DON'T FALL OFF THE BOTTOM!",
+    ],
     howTo: [
       "TILT YOUR PHONE TO STEER",
       "TAP ALLOW IF YOUR PHONE ASKS ABOUT MOTION",
@@ -100,8 +108,9 @@
         if (!started) return; // waits for the first tap (which is also when iPhone asks about tilt)
 
         // steering is by tilt only; if no motion reading has arrived after a few seconds, show the tip
-        if (motion === "unknown" && t - startedAt > 3) motion = "none";
-        const steer = tiltX != null ? tiltX : 0;
+        if (!host.arcade && motion === "unknown" && t - startedAt > 3) motion = "none";
+        // Normal mode: tilt only. Arcade mode: the joystick.
+        const steer = host.arcade ? host.pad.x : (tiltX != null ? tiltX : 0);
         const target = steer * MAXVX;
         bot.vx += (target - bot.vx) * Math.min(1, dt * 10);
         bot.x += bot.vx * dt;
@@ -220,9 +229,9 @@
         }
         fx.draw(g);
         Kit.text(g, height() + "M", W - 8, 14, 10, "#fff", "right");
-        if (!started && Math.floor(t * 2) % 2 === 0) Kit.text(g, "TAP TO START", W / 2, H * 0.4, 12, "#fff", "center", "#ff8ac8");
-        else if (started && (motion === "denied" || motion === "none")) motionTip(g);
-        else if (started && motion !== "on" && t - startedAt < 3) Kit.text(g, "TILT TO STEER", W / 2, H - 20, 8, "#aaa");
+        if (!started && Math.floor(t * 2) % 2 === 0) Kit.text(g, host.arcade ? "PUSH THE JOYSTICK" : "TAP TO START", W / 2, H * 0.4, 12, "#fff", "center", "#ff8ac8");
+        else if (started && !host.arcade && (motion === "denied" || motion === "none")) motionTip(g);
+        else if (started && !host.arcade && motion !== "on" && t - startedAt < 3) Kit.text(g, "TILT TO STEER", W / 2, H - 20, 8, "#aaa");
         // the two touch halves, shown faintly while held
         banner.draw(g, W, H);
       }
@@ -243,7 +252,10 @@
       function down() {}
       function move() {}
       // iPhone only lets a page ask for motion when a finger lifts
+      // Arcade mode: any push of the joystick starts the game
+      function arcade(ev) { if (!started && (ev.type === "dir" && ev.dir)) { started = true; startedAt = t; Sound.play("select"); } }
       function up() {
+        if (host.arcade) return;
         if (!started) { askTilt(); started = true; startedAt = t; Sound.play("select"); }
         else if (motion === "none") { askedTilt = true; askTilt(); startedAt = t; motion = "unknown"; }
       }
@@ -253,7 +265,7 @@
         bot: { x: bot.x + bot.w / 2, y: bot.y, vx: bot.vx, vy: bot.vy }, W,
         platforms: platforms.filter(p => !p.gone).map(p => ({ x: p.x, w: PW, y: p.y, kind: p.kind, vx: p.vx })),
         drones: drones.filter(d => !d.dead).map(d => ({ x: d.x, y: d.y })) });
-      return { update, draw, down, move, up, destroy, state, resize(w, h) { W = w; H = h; } };
+      return { update, draw, down, move, up, arcade, destroy, state, resize(w, h) { W = w; H = h; } };
     },
   });
 })();

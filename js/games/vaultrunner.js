@@ -71,6 +71,14 @@
 
   Arcade.addGame("vaultrunner", {
     music: "vaultrunner",
+    deck: { stick: true, buttons: [] },
+    arcadeHowTo: [
+      "JOYSTICK: STEER THE THIEF",
+      "PUSH EARLY TO TURN AT THE NEXT GAP",
+      "GRAB EVERY COIN TO CRACK THE VAULT",
+      "DODGE THE GUARD BOTS",
+      "BLUE GEMS FREEZE THE BOTS",
+    ],
     howTo: [
       "SWIPE TO CHANGE DIRECTION",
       "GRAB EVERY COIN TO CRACK THE VAULT",
@@ -149,7 +157,7 @@
         alarmT = Math.max(25, 60 - level * 5);
         alarm = false;
         resetActors();
-        banner.show("VAULT " + level, level === 1 ? "SWIPE TO MOVE" : "", "#fff", "#ffd63c", 1.6);
+        banner.show("VAULT " + level, level === 1 ? (host.arcade ? "JOYSTICK TO MOVE" : "SWIPE TO MOVE") : "", "#fff", "#ffd63c", 1.6);
         host.tempo = Math.min(1.4, 1 + (level - 1) * 0.06);
         Sound.setTempo(host.tempo);
       }
@@ -311,14 +319,14 @@
         // top bar: lives, coins left, alarm clock
         for (let i = 0; i < lives; i++) g.drawImage(thiefImg, 6 + i * (thiefImg.width + 4), 2, thiefImg.width * 0.8, thiefImg.height * 0.8);
         Kit.text(g, "VAULT " + level, W / 2, 10, 8, "#ffd63c");
-        if (!started && caughtT <= 0 && Math.floor(t * 2) % 2 === 0) Kit.text(g, "SWIPE TO GO", W / 2, oy + T * (ROWS - 3.5), 10, "#fff", "center", "#c04cff");
+        if (!started && caughtT <= 0 && Math.floor(t * 2) % 2 === 0) Kit.text(g, (host.arcade ? "PUSH THE JOYSTICK" : "SWIPE TO GO"), W / 2, oy + T * (ROWS - 3.5), 10, "#fff", "center", "#c04cff");
         if (alarm) { if (Math.floor(t * 4) % 2) Kit.text(g, "ALARM", W - 6, 10, 8, "#ff3c50", "right"); }
         else Kit.text(g, "ALARM " + Math.ceil(alarmT), W - 6, 10, 8, alarmT < 10 ? "#ff3c50" : "#888", "right");
         banner.draw(g, W, H);
       }
 
       let started = false;
-      const swipe = Kit.swiper(dir => {
+      function steer(dir) {
         if (caughtT > 0 || over) return;
         started = true;
         const d = DIRS[dir];
@@ -337,13 +345,16 @@
         } else thief.want = d;
         if (d[0]) thief.face = d[0];
         Sound.play("move");
-      }, null, 16);
+      }
+      const swipe = Kit.swiper(steer, null, 16);
+      // Arcade mode: the joystick steers, like a swipe each time it's pushed a new way
+      function arcade(ev) { if (ev.type === "dir" && ev.dir) steer(ev.dir); }
 
       newVault();
       const state = () => ({ started, level, lives, left: loot.size, alarm, freezeT, caught: caughtT > 0, over,
         thief: { x: thief.x, y: thief.y, dir: thief.dir, prog: thief.prog, want: thief.want },
         bots: bots.map(b => ({ ...pos(b), out: b.out })), maze, loot: [...loot], gems: [...gems], botSpeed: botSpeed() });
-      return { update, draw, down: swipe.down, move: swipe.move, up: swipe.up, resize(w, h) { W = w; H = h; const oldT = T; layout(); if (T !== oldT) drawMaze(); }, state };
+      return { update, draw, down: swipe.down, move: swipe.move, up: swipe.up, arcade, resize(w, h) { W = w; H = h; const oldT = T; layout(); if (T !== oldT) drawMaze(); }, state };
     },
   });
 })();

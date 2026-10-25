@@ -260,6 +260,16 @@ const Hall = (() => {
     backToHall();
   });
 
+  // ---- NORMAL / ARCADE switch ----
+  function showMode() {
+    const m = Deck.mode();
+    $("mode-normal").classList.toggle("on", m === "normal");
+    $("mode-arcade").classList.toggle("on", m === "arcade");
+  }
+  $("mode-normal").addEventListener("click", e => { e.stopPropagation(); Deck.setMode("normal"); Sound.play("select"); showMode(); });
+  $("mode-arcade").addEventListener("click", e => { e.stopPropagation(); Deck.setMode("arcade"); Sound.play("credit"); showMode(); });
+  showMode();
+
   // ---- the "most coins in a day" board ----
   function showDays() {
     const ul = $("days-board");

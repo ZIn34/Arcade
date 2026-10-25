@@ -11,6 +11,15 @@
 
   Arcade.addGame("pulsetap", {
     // no background song: the beat is made by the game itself so the notes stay in time with it
+    deck: { stick: false, buttons: [{ id: "l0", label: "PINK", color: "#ff3cc8" }, { id: "l1", label: "BLUE", color: "#3cf0ff" }, { id: "l2", label: "GREEN", color: "#4dff7a" }] },
+    arcadeHowTo: [
+      "NOTES SLIDE DOWN 3 LANES",
+      "PRESS THE BUTTON OF THE SAME COLOUR",
+      "AS ITS NOTE HITS THE LINE",
+      "EVERY HIT PLAYS THE TUNE",
+      "MISSES DRAIN YOUR ENERGY",
+      "THE BEAT KEEPS SPEEDING UP",
+    ],
     howTo: [
       "NOTES SLIDE DOWN 3 LANES",
       "TAP A LANE AS ITS NOTE HITS THE LINE",
@@ -23,7 +32,8 @@
       let W = host.W, H = host.H;
       const LANES = 3;
       let laneW, lineY;
-      function layout() { laneW = W / LANES; lineY = H - 110; }
+      // in Arcade mode the deck's buttons replace the tap pads, so the hit line sits lower
+      function layout() { laneW = W / LANES; lineY = H - (host.arcade ? 46 : 110); }
       layout();
       const fx = Kit.particles(), banner = Kit.banner();
 
@@ -162,8 +172,8 @@
         }
         fx.draw(g);
         if (judge) Kit.text(g, judge.text, laneW * (judge.lane + 0.5), lineY - 40, 10, judge.color);
-        // tap pads under the line
-        for (let l = 0; l < LANES; l++) {
+        // tap pads under the line (Normal mode only)
+        if (!host.arcade) for (let l = 0; l < LANES; l++) {
           g.fillStyle = flash[l] > 0 ? LANE_COLORS[l] : "#140a24";
           g.fillRect(l * laneW + 6, lineY + 24, laneW - 12, H - lineY - 34);
           g.strokeStyle = LANE_COLORS[l]; g.lineWidth = 2; g.strokeRect(l * laneW + 6, lineY + 24, laneW - 12, H - lineY - 34);
@@ -184,9 +194,11 @@
         hitLane(lane, song + (performance.now() - frameAt) / 1000);
       }
 
+      // Arcade mode: one button per lane
+      function arcade(ev) { if (ev.type === "down") hitLane(+ev.id.slice(1), song + (performance.now() - frameAt) / 1000); }
       const state = () => ({ song, bpm, energy, combo, best, hits, misses, over, travel: travel(), lineY, laneW,
         notes: notes.filter(n => !n.hit && !n.missed).map(n => ({ lane: n.lane, time: n.time })) });
-      return { update, draw, down, state, resize(w, h) { W = w; H = h; layout(); } };
+      return { update, draw, down, arcade, state, resize(w, h) { W = w; H = h; layout(); } };
     },
   });
 })();

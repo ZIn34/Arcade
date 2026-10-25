@@ -27,6 +27,14 @@
 
   Arcade.addGame("pixelpile", {
     music: "pixelpile",
+    deck: { stick: true, buttons: [{ id: "a", label: "TURN", color: "#3cf0ff" }, { id: "b", label: "DROP", color: "#c04cff" }] },
+    arcadeHowTo: [
+      "JOYSTICK LEFT/RIGHT: MOVE",
+      "JOYSTICK DOWN: DROP SLOWLY, UP: DROP",
+      "TURN: TURN THE PIECE, DROP: DROP IT",
+      "FILL A ROW, OR JOIN 4 OF A COLOUR",
+      "BOMBS BLAST WHERE THEY LAND",
+    ],
     howTo: [
       "DRAG LEFT OR RIGHT TO MOVE",
       "TAP TO TURN THE PIECE",
@@ -204,6 +212,8 @@
         if (over) { overT -= dt; if (overT <= 0) host.gameOver(); return; }
         if (resolving) { resolving.t -= dt; if (resolving.t <= 0) settle(); return; }
         if (!piece) return;
+        arcadeHold(dt);
+        if (!piece) return;
         fallT += dt;
         if (fits(piece, piece.x, piece.y + 1)) {
           lockT = 0;
@@ -296,10 +306,35 @@
         drop = null;
       }
 
+      // Arcade mode: joystick left/right moves (hold to keep sliding), down drops slowly, up drops fast;
+      // TURN turns, DROP drops.
+      let holdT = 0;
+      function softDrop() { if (piece && !resolving && fits(piece, piece.x, piece.y + 1)) { piece.y++; fallT = 0; host.addScore(1); } }
+      function arcade(ev) {
+        if (ev.type === "dir") {
+          if (ev.dir === "left") moveBy(-1);
+          if (ev.dir === "right") moveBy(1);
+          if (ev.dir === "down") softDrop();
+          if (ev.dir === "up") hardDrop();
+          holdT = 0.18;
+        }
+        if (ev.type === "down" && ev.id === "a") turn();
+        if (ev.type === "down" && ev.id === "b") hardDrop();
+      }
+      function arcadeHold(dt) {
+        if (!host.arcade || !host.pad.dir || host.pad.dir === "up") return;
+        holdT -= dt;
+        if (holdT > 0) return;
+        if (host.pad.dir === "left") moveBy(-1);
+        if (host.pad.dir === "right") moveBy(1);
+        if (host.pad.dir === "down") softDrop();
+        holdT = host.pad.dir === "down" ? 0.05 : 0.07;
+      }
+
       spawn();
       const state = () => ({ level, cleared, over, colors: nColors(), fallEvery: fallEvery(), resolving: !!resolving,
         piece: piece && { x: piece.x, y: piece.y, cells: piece.cells, colors: piece.colors }, grid: grid.map(r => r.map(c => c || 0)), C, bx, by, cols: COLS, rows: ROWS });
-      return { update, draw, down, move, up, state, resize(w, h) { W = w; H = h; layout(); }, _test: { moveBy, turn, hardDrop } };
+      return { update, draw, down, move, up, arcade, state, resize(w, h) { W = w; H = h; layout(); }, _test: { moveBy, turn, hardDrop } };
     },
   });
 })();

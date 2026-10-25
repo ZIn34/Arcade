@@ -3,7 +3,9 @@
 // A game file calls Arcade.addGame(id, { howTo: [...lines], music, create(host) }).
 // create(host) returns an object with update(dt), draw(g) and optionally
 // down(x, y, id), move(x, y, id), up(x, y, id), resize(w, h).
-// host gives: W, H (play area size), addScore(n), setScore(n), score, gameOver(), sfx(name), Sound.
+// host gives: W, H (play area size), addScore(n), setScore(n), score, gameOver(), sfx(name), Sound,
+// arcade (true in Arcade mode) and pad (the arcade deck's live state). In Arcade mode a game can also
+// give deck: { stick, buttons }, arcadeHowTo: [...lines] and an arcade(ev) handler (see deck.js).
 const Arcade = {
   games: {},
   addGame(id, game) { this.games[id] = game; },
@@ -17,7 +19,8 @@ const Shell = (() => {
   let running = false, paused = false, raf = 0, last = 0, onExit = null;
   let W = 0, H = 0, dpr = 1;
 
-  const seenKey = id => "crexz-arcade.seen." + id;
+  const seenKey = id => "crexz-arcade.seen." + id + (arcade && game && game.arcadeHowTo ? ".arcade" : "");
+  let arcade = false;
 
   function fit() {
     const r = stage.getBoundingClientRect();
@@ -38,6 +41,9 @@ const Shell = (() => {
     game = Arcade.games[cab.id];
     onExit = exitCallback;
     $("play").classList.remove("hidden");
+    // Arcade mode: show the control deck set up for this game
+    arcade = Deck.setup(game.deck, ev => { if (running && !paused && inst && inst.arcade) inst.arcade(ev); });
+    $("play").classList.toggle("arcade", arcade);
     $("hud-hi").textContent = Scores.best(cab.id);
     setScoreText(0);
     fit();
@@ -51,7 +57,7 @@ const Shell = (() => {
     overlay.append(
       el("h2", { class: "neon-cyan", text: cab.name.replace("\n", " ") }),
       el("p", { class: "neon-yellow", text: "HOW TO PLAY" }),
-      el("ul", {}, game.howTo.map(line => el("li", { text: line }))),
+      el("ul", {}, (arcade && game.arcadeHowTo ? game.arcadeHowTo : game.howTo).map(line => el("li", { text: line }))),
       button(first ? "GOT IT!" : "BACK", "", () => {
         localStorage.setItem(seenKey(cab.id), "1");
         Sound.play("select");
@@ -63,8 +69,9 @@ const Shell = (() => {
   function start() {
     overlay.classList.add("hidden");
     overlay.innerHTML = "";
+    Deck.release();
     host = {
-      W, H, score: 0, Sound,
+      W, H, score: 0, Sound, arcade, pad: Deck.pad,
       addScore(n) { host.setScore(host.score + n); },
       setScore(n) {
         host.score = Math.max(0, Math.floor(n));
@@ -102,6 +109,7 @@ const Shell = (() => {
   function pause() {
     if (!running || paused) return;
     paused = true;
+    Deck.release();
     Sound.stopMusic();
     overlay.innerHTML = "";
     overlay.classList.remove("hidden");
@@ -123,6 +131,7 @@ const Shell = (() => {
     if (!running) return;
     running = false;
     cancelAnimationFrame(raf);
+    Deck.release();
     inst.draw(g, W, H);
     Sound.stopMusic();
     Sound.play("gameover");
@@ -245,6 +254,8 @@ const Shell = (() => {
     Sound.play("back");
     if (inst && inst.destroy) inst.destroy();
     inst = null; host = null;
+    Deck.hide();
+    $("play").classList.remove("arcade");
     overlay.classList.add("hidden");
     overlay.innerHTML = "";
     $("play").classList.add("hidden");

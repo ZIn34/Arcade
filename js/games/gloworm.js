@@ -17,6 +17,14 @@
 
   Arcade.addGame("gloworm", {
     music: "gloworm",
+    deck: { stick: true, buttons: [{ id: "a", label: "TURN L", color: "#4dff7a" }, { id: "b", label: "TURN R", color: "#ffd63c" }] },
+    arcadeHowTo: [
+      "JOYSTICK: POINT THE WAY TO GO",
+      "OR TURN L / TURN R TO TURN",
+      "EAT SPARKS TO GROW",
+      "DON'T HIT WALLS, ROCKS OR YOURSELF",
+      "IT SPEEDS UP AS YOU GROW",
+    ],
     howTo: [
       "SWIPE TO TURN THE WORM",
       "EAT SPARKS TO GROW",
@@ -199,16 +207,29 @@
         const min = Math.max(16, cell * 0.6);
         if (Math.abs(dx) < min && Math.abs(dy) < min) return;
         const nd = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? DIRS.right : DIRS.left) : (dy > 0 ? DIRS.down : DIRS.up);
+        turnTo(nd);
+        swipe = { x, y };
+      }
+      // A turn from a swipe, the joystick or a button: the first one starts the worm.
+      function turnTo(nd) {
         if (!started) {
           started = true;
           if (nd[0] !== -dir[0] || nd[1] !== -dir[1]) dir = nd; // the first swipe also picks the way
           Sound.play("move");
-          swipe = { x, y };
           return;
         }
         const lastQueued = queue.length ? queue[queue.length - 1] : dir;
         if (nd !== lastQueued && queue.length < 2) { queue.push(nd); Sound.play("move"); }
-        swipe = { x, y };
+      }
+      // Arcade mode: joystick turns to that direction; the buttons turn left or right of the way you're heading
+      function arcade(ev) {
+        if (ev.type === "dir" && ev.dir) turnTo(DIRS[ev.dir]);
+        if (ev.type === "down") {
+          const cur = queue.length ? queue[queue.length - 1] : dir;
+          const left = [cur[1], -cur[0]], right = [-cur[1], cur[0]];
+          const pick = v => Object.values(DIRS).find(d => d[0] === v[0] && d[1] === v[1]);
+          turnTo(pick(ev.id === "a" ? left : right));
+        }
       }
       function up() { swipe = null; }
       // The field keeps its size mid-game (so the worm never ends up outside it); it just re-centres.
@@ -221,7 +242,7 @@
       // A read-out of the game's state, used by the automatic tests.
       const state = () => ({ started, level, stepEvery, eaten, dead, cols: COLS, rows, worm, spark, rocks, dir, queued: queue.length,
         gold: gold && [gold.x, gold.y] });
-      return { update, draw, down, move, up, resize, state };
+      return { update, draw, down, move, up, arcade, resize, state };
     },
   });
 })();
