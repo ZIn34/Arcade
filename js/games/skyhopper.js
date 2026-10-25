@@ -1,7 +1,7 @@
 // SKY HOPPER — Boing the spring-legged robot bounces up and up through the night sky. Land on platforms
 // to bounce again: blue ones slide, brown ones crumble after one bounce, and yellow pads launch you high.
 // Higher up the gaps widen and spiky mines drift about (bounce on top of one to knock it out).
-// Tilt the phone to steer, or hold the left or right side of the screen. Off the sides, you wrap round.
+// Tilt the phone to steer (tilt only; there are no on-screen controls). Off the sides, you wrap round.
 (() => {
   Sound.defineSong("skyhopper", {
     bpm: 126,
@@ -32,7 +32,7 @@
     music: "skyhopper",
     howTo: [
       "TILT YOUR PHONE TO STEER",
-      "OR HOLD THE LEFT OR RIGHT SIDE",
+      "TAP ALLOW IF YOUR PHONE ASKS ABOUT MOTION",
       "LAND ON PLATFORMS TO BOUNCE UP",
       "BROWN ONES CRUMBLE, YELLOW PADS LAUNCH",
       "BOUNCE ON MINES, DON'T BUMP THEM",
@@ -50,7 +50,9 @@
       // world y grows upward: screen y = H - (worldY - camY)
       const bot = { x: W / 2, y: 80, vx: 0, vy: JUMP, w: boingImg.width, h: boingImg.height, squash: 0 };
       let camY = 0, best = 0, platforms = [], drones = [], topY = 0, t = 0, over = false, overT = 0, started = false;
-      let tiltX = null, holdDir = 0, holds = new Map(), askedTilt = false, lastMilestone = 0;
+      let tiltX = null, askedTilt = false, lastMilestone = 0;
+      let motion = "unknown"; // unknown, on, denied, none (no motion sensor reported anything)
+      let startedAt = 0;
 
       const height = () => Math.floor(best / 10);            // score and difficulty both follow height
       const difficulty = () => Math.min(1, height() / 2500); // 0 at the start, 1 by 2,500
@@ -81,14 +83,14 @@
       const sy = y => H - (y - camY);
 
       // Tilt: iPhone asks permission the first time (it has to be asked from a tap).
-      function onTilt(e) { if (e.gamma != null) tiltX = Kit.clamp(e.gamma / 22, -1, 1); }
+      function onTilt(e) { if (e.gamma != null) { tiltX = Kit.clamp(e.gamma / 22, -1, 1); motion = "on"; } }
       function askTilt() {
-        if (askedTilt) return;
-        askedTilt = true;
         const D = window.DeviceOrientationEvent;
+        if (!askedTilt) window.addEventListener("deviceorientation", onTilt);
+        askedTilt = true;
         if (D && typeof D.requestPermission === "function") {
-          D.requestPermission().then(s => { if (s === "granted") window.addEventListener("deviceorientation", onTilt); }).catch(() => {});
-        } else if (D) window.addEventListener("deviceorientation", onTilt);
+          D.requestPermission().then(r => { if (r !== "granted") motion = "denied"; }).catch(() => { motion = "denied"; });
+        }
       }
 
       function update(dt) {
@@ -97,8 +99,9 @@
         if (over) { overT -= dt; if (overT <= 0) host.gameOver(); return; }
         if (!started) return; // waits for the first tap (which is also when iPhone asks about tilt)
 
-        // steering: holding a side wins over tilt, so the buttons always work
-        const steer = holdDir !== 0 ? holdDir : (tiltX != null ? tiltX : 0);
+        // steering is by tilt only; if no motion reading has arrived after a few seconds, show the tip
+        if (motion === "unknown" && t - startedAt > 3) motion = "none";
+        const steer = tiltX != null ? tiltX : 0;
         const target = steer * MAXVX;
         bot.vx += (target - bot.vx) * Math.min(1, dt * 10);
         bot.x += bot.vx * dt;
@@ -218,27 +221,35 @@
         fx.draw(g);
         Kit.text(g, height() + "M", W - 8, 14, 10, "#fff", "right");
         if (!started && Math.floor(t * 2) % 2 === 0) Kit.text(g, "TAP TO START", W / 2, H * 0.4, 12, "#fff", "center", "#ff8ac8");
-        else if (started && tiltX == null && t < 8 && Math.floor(t * 2) % 2 === 0) Kit.text(g, "HOLD LEFT / RIGHT SIDE", W / 2, H - 20, 8, "#aaa");
+        else if (started && (motion === "denied" || motion === "none")) motionTip(g);
+        else if (started && motion !== "on" && t - startedAt < 3) Kit.text(g, "TILT TO STEER", W / 2, H - 20, 8, "#aaa");
         // the two touch halves, shown faintly while held
-        if (holdDir) { g.fillStyle = "rgba(255,255,255,.06)"; g.fillRect(holdDir < 0 ? 0 : W / 2, 0, W / 2, H); }
         banner.draw(g, W, H);
       }
 
-      function refreshHold() {
-        let l = 0, r = 0;
-        for (const side of holds.values()) side < 0 ? l++ : r++;
-        holdDir = l && !r ? -1 : r && !l ? 1 : 0;
+      // Shown when the phone won't share motion: how to turn it on.
+      function motionTip(g) {
+        const w = W - 40, h = 150, x = 20, y = H * 0.3;
+        g.fillStyle = "rgba(0,0,0,.85)"; g.fillRect(x, y, w, h);
+        g.strokeStyle = "#ff8ac8"; g.lineWidth = 2; g.strokeRect(x, y, w, h);
+        const lines = motion === "denied"
+          ? ["SKY HOPPER NEEDS MOTION", "", "CLOSE THE ARCADE FULLY,", "OPEN IT AGAIN, START SKY HOPPER", "AND TAP ALLOW WHEN ASKED"]
+          : ["NO TILT FOUND", "", "SKY HOPPER IS STEERED BY", "TILTING YOUR PHONE.", "TAP HERE TO ASK AGAIN"];
+        lines.forEach((l, i) => Kit.text(g, l, W / 2, y + 24 + i * 24, i === 0 ? 10 : 8, i === 0 ? "#fff" : "#ddd", "center", i === 0 ? "#ff8ac8" : null));
       }
-      function down(x, y, id) { if (started) { holds.set(id, x < W / 2 ? -1 : 1); refreshHold(); } }
-      function move(x, y, id) { if (holds.has(id)) { holds.set(id, x < W / 2 ? -1 : 1); refreshHold(); } }
-      // iPhone only lets a page ask for tilt when a finger lifts, so the first tap's release asks and starts
-      function up(x, y, id) {
-        if (!started) { askTilt(); started = true; Sound.play("select"); }
-        holds.delete(id); refreshHold();
+
+      // Taps don't steer. The first tap starts the game (and is when iPhone asks about motion);
+      // tapping while the tip is showing asks again.
+      function down() {}
+      function move() {}
+      // iPhone only lets a page ask for motion when a finger lifts
+      function up() {
+        if (!started) { askTilt(); started = true; startedAt = t; Sound.play("select"); }
+        else if (motion === "none") { askedTilt = true; askTilt(); startedAt = t; motion = "unknown"; }
       }
       function destroy() { window.removeEventListener("deviceorientation", onTilt); }
 
-      const state = () => ({ started, tilt: tiltX, holdDir, height: height(), over, camY, difficulty: difficulty(),
+      const state = () => ({ started, tilt: tiltX, motion, height: height(), over, camY, difficulty: difficulty(),
         bot: { x: bot.x + bot.w / 2, y: bot.y, vx: bot.vx, vy: bot.vy }, W,
         platforms: platforms.filter(p => !p.gone).map(p => ({ x: p.x, w: PW, y: p.y, kind: p.kind, vx: p.vx })),
         drones: drones.filter(d => !d.dead).map(d => ({ x: d.x, y: d.y })) });

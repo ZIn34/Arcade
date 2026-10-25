@@ -1,6 +1,6 @@
 ﻿// Keeps a copy of the whole arcade on the phone so it opens offline.
 // Bump VERSION whenever any file changes, so phones fetch the new copy.
-const VERSION = "arcade-v9";
+const VERSION = "arcade-v10";
 const FILES = [
   "./",
   "index.html",
