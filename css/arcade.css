@@ -434,6 +434,22 @@ button {
   background-size: 100% 100%;
   background-image: var(--coin-img);
 }
+.days-btn {
+  margin-left: 10px;
+  font-size: 8px;
+  padding: 6px 8px;
+  color: var(--yellow);
+  border: 2px solid var(--yellow);
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(255,214,60,.4);
+}
+.days-btn:active { transform: scale(.94); }
+.days-board { max-width: 280px; font-size: 10px; }
+.days-board li .coins { display: flex; align-items: center; gap: 4px; }
+.days-board li .coins .coin-ico { width: 12px; height: 12px; }
+.days-board li .day { color: #888; width: 9ch; text-align: right; }
+.days-board li.today .name, .days-board li.today span { color: var(--yellow); }
+.today-line { font-size: 10px; color: var(--cyan); }
 .hall-coins-note { font-size: 7px; color: #887; text-shadow: none; }
 .coins-won { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
 .coins-won .coin-ico { width: 24px; height: 24px; }

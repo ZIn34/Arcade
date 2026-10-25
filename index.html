@@ -41,7 +41,8 @@
     <h1 class="neon-sign"><span class="flicker">CREXZ</span> ARCADE</h1>
     <button id="btn-mute" class="icon-btn mute-btn" aria-label="Sound on or off"></button>
   </header>
-  <div class="hall-coins"><i class="coin-ico"></i><span id="hall-coins">0</span><span class="hall-coins-note" id="hall-coins-note"></span></div>
+  <div class="hall-coins"><i class="coin-ico"></i><span id="hall-coins">0</span><span class="hall-coins-note" id="hall-coins-note"></span>
+    <button id="btn-days" class="days-btn" aria-label="Most coins in a day">&#9733; BEST DAYS</button></div>
   <div id="cabinets" class="cabinets"></div>
   <footer class="hall-bottom">
     <button id="btn-prev" class="arrow-btn" aria-label="Previous cabinet">&#9664;</button>
@@ -85,6 +86,17 @@
   </div>
   <div id="stage" class="stage"><canvas id="game-canvas"></canvas></div>
   <div id="overlay" class="overlay hidden"></div>
+</div>
+
+<!-- Most coins won in a day -->
+<div id="days" class="screen modal hidden">
+  <div class="panel">
+    <h2 class="neon-yellow">MOST COINS<br>IN A DAY</h2>
+    <ul class="scores days-board" id="days-board"></ul>
+    <p class="today-line" id="days-today"></p>
+    <p class="small">Coins you win from your scores count. The 4 free coins each day don't.</p>
+    <button id="btn-days-close" class="pix-btn">OK</button>
+  </div>
 </div>
 
 <!-- About / credits -->

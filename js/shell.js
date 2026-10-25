@@ -129,19 +129,17 @@ const Shell = (() => {
     const score = host.score;
     // coins back for the score
     won = Coins.earned(cab.id, score);
-    Coins.add(won);
+    Coins.win(won);
     overlay.innerHTML = "";
     overlay.classList.remove("hidden");
     overlay.append(el("h2", { class: "neon-pink", text: "GAME OVER" }), el("p", { text: "SCORE " + score }), coinsWon());
-    if (Scores.qualifies(cab.id, score)) {
-      setTimeout(() => askInitials(score), 700);
-    } else {
-      showResults(-1);
-    }
+    if (Scores.qualifies(cab.id, score)) setTimeout(() => askInitials(score), 700);
+    else if (Coins.dayQualifies()) setTimeout(() => askDayInitials(-1), 700);
+    else showResults(-1);
   }
 
-  function askInitials(score) {
-    Sound.play("highscore");
+  // The arcade-style 3-letter picker: arrows up and down on each letter, then SAVE.
+  function initialsPicker(title, sub, onSave) {
     const letters = Scores.lastInitials().split("");
     let active = 0;
     const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
@@ -166,17 +164,33 @@ const Shell = (() => {
     };
     render();
     overlay.append(
-      el("h2", { class: "neon-yellow", text: "NEW HIGH SCORE!" }),
-      el("p", { text: "SCORE " + score + "\nENTER YOUR INITIALS" }),
+      el("h2", { class: "neon-yellow", text: title }),
+      el("p", { text: sub }),
       slots,
       button("SAVE", "", () => {
         const name = letters.join("");
         Scores.setLastInitials(name);
-        const place = Scores.add(cab.id, name.replace(/ /g, "_"), score);
         Sound.play("credit");
-        showResults(place);
+        onSave(name.replace(/ /g, "_"));
       })
     );
+  }
+
+  function askInitials(score) {
+    Sound.play("highscore");
+    initialsPicker("NEW HIGH SCORE!", "SCORE " + score + "\nENTER YOUR INITIALS", name => {
+      const place = Scores.add(cab.id, name, score);
+      if (Coins.dayQualifies()) askDayInitials(place); else showResults(place);
+    });
+  }
+
+  // Today's coins have made the "most coins in a day" board.
+  function askDayInitials(place) {
+    Sound.play("bonus");
+    initialsPicker("BEST DAY!", "TODAY YOU'VE WON " + Coins.earnedToday() + " COINS\nTHAT'S A TOP " + Coins.BOARD_SIZE + " DAY!\nENTER YOUR INITIALS", name => {
+      Coins.addDay(name);
+      showResults(place);
+    });
   }
 
   function showResults(myPlace) {
@@ -216,7 +230,9 @@ const Shell = (() => {
   let won = 0;
   function coinsWon() {
     const box = el("div", { class: "coins-won" }, [el("i", { class: "coin-ico" }), el("span", { text: "+" + won + (won === 1 ? " COIN" : " COINS") })]);
-    const wrap = el("div", {}, [box, el("p", { class: "small-note", text: "1 COIN PER " + Coins.every(cab.id).toLocaleString("en-US") + " POINTS" })]);
+    const wrap = el("div", {}, [box,
+      el("p", { class: "small-note", text: "1 COIN PER " + Coins.every(cab.id).toLocaleString("en-US") + " POINTS" }),
+      el("p", { class: "small-note today-note", text: "TODAY: " + Coins.earnedToday() + " COINS WON" })]);
     wrap.style.display = "flex"; wrap.style.flexDirection = "column"; wrap.style.alignItems = "center"; wrap.style.gap = "4px";
     return wrap;
   }

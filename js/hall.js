@@ -260,6 +260,31 @@ const Hall = (() => {
     backToHall();
   });
 
+  // ---- the "most coins in a day" board ----
+  function showDays() {
+    const ul = $("days-board");
+    ul.innerHTML = "";
+    const b = Coins.board(), today = Coins.today();
+    for (let i = 0; i < Coins.BOARD_SIZE; i++) {
+      const e = b[i];
+      const li = document.createElement("li");
+      li.className = (e ? "" : "empty") + (e && e.d === today ? " today" : "");
+      const cells = [["rank", (i + 1) + "."], ["name", e ? e.n.replace(/[<>&]/g, "") : "---"], ["coins", e ? String(e.c) : "0"], ["day", e ? Coins.dayLabel(e.d) : ""]];
+      for (const [cls, txt] of cells) {
+        const sp = document.createElement("span"); sp.className = cls; sp.textContent = txt;
+        if (cls === "coins" && e) { const ico = document.createElement("i"); ico.className = "coin-ico"; sp.append(ico); }
+        li.append(sp);
+      }
+      ul.append(li);
+    }
+    const n = Coins.earnedToday(), last = b.length >= Coins.BOARD_SIZE ? b[b.length - 1].c : 0;
+    const onIt = b.some(e => e.d === today);
+    $("days-today").textContent = "TODAY: " + n + " COINS WON" + (onIt ? " ★ ON THE BOARD" : last && n <= last ? " · BEAT " + last + " TO GET ON" : "");
+    $("days").classList.remove("hidden");
+  }
+  $("btn-days").addEventListener("click", e => { e.stopPropagation(); Sound.play("select"); showDays(); });
+  $("btn-days-close").addEventListener("click", () => { Sound.play("back"); $("days").classList.add("hidden"); });
+
   function backToHall() {
     refreshScreens();
     showCoins();
