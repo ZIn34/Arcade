@@ -479,7 +479,7 @@
       }
 
       // ---------------- your buttons, and the raise picker ----------------
-      function layoutHE() {
+      function layoutTurn() {
         ui = [];
         const p0 = me();
         if (he.stage === "result" || he.stage === "next" || over) return;
@@ -494,6 +494,13 @@
           button("raise", he.current ? "RAISE" : "BET", 8 + (bw + gap) * 2, by, bw, bh, () => openPicker(), { color: "#ffd63c", size: 11, enabled: canRaise }),
         ];
         focus = 1;
+      }
+      function layoutHE() {
+        if (he.showHands) { ui = [button("close", "CLOSE", (W - 200) / 2, H - 66, 200, 52, closeHands, { color: "#3cf0ff", size: 11 })]; focus = 0; return; }
+        layoutTurn();
+        if (!over) ui.push(handsButton());
+        if (focus >= ui.length || focus < 0) focus = Math.max(0, ui.findIndex(b => b.id === "call")); // keep the cursor on a real button
+        if (focus < 0) focus = 0;
       }
       function openPicker() {
         const p0 = me();
@@ -552,6 +559,54 @@
           Kit.text(g, String(pk.min), s.x, s.y + 32, 7, "#888", "left");
           Kit.text(g, String(pk.max), s.x + s.w, s.y + 32, 7, "#888", "right");
         }
+      }
+
+
+      // ---------------- the HANDS chart: every poker hand, best to worst ----------------
+      const C = (r, s) => ({ r, s }); // s: 0 spades, 1 hearts, 2 diamonds, 3 clubs
+      const CHART = [
+        ["ROYAL FLUSH", [C(14, 0), C(13, 0), C(12, 0), C(11, 0), C(10, 0)], -1],
+        ["STRAIGHT FLUSH", [C(9, 1), C(8, 1), C(7, 1), C(6, 1), C(5, 1)], 8],
+        ["FOUR OF A KIND", [C(9, 3), C(9, 2), C(9, 1), C(9, 0), C(13, 2)], 7],
+        ["FULL HOUSE", [C(13, 0), C(13, 1), C(13, 2), C(4, 3), C(4, 0)], 6],
+        ["FLUSH", [C(14, 2), C(11, 2), C(8, 2), C(4, 2), C(2, 2)], 5],
+        ["STRAIGHT", [C(10, 3), C(9, 2), C(8, 1), C(7, 0), C(6, 3)], 4],
+        ["THREE OF A KIND", [C(12, 0), C(12, 1), C(12, 2), C(7, 3), C(2, 0)], 3],
+        ["TWO PAIR", [C(11, 1), C(11, 3), C(5, 2), C(5, 0), C(14, 0)], 2],
+        ["PAIR", [C(10, 0), C(10, 1), C(13, 2), C(6, 3), C(3, 0)], 1],
+        ["HIGH CARD", [C(14, 3), C(12, 2), C(9, 1), C(5, 0), C(3, 3)], 0],
+      ];
+      // which row of the chart your cards make right now (or -1 before you have any)
+      function myChartRow() {
+        const p0 = me();
+        if (!p0.hole.length || p0.folded) return -1;
+        const e = best(p0.hole.concat(he.board));
+        if (e.cat === 8 && e.ranks[0] === 14) return 0;
+        return CHART.findIndex(row => row[2] === e.cat);
+      }
+      function openHands() { he.showHands = true; Sound.play("select"); layoutHE(); }
+      function closeHands() { he.showHands = false; Sound.play("back"); layoutHE(); }
+      function handsButton() { return button("hands", "HANDS", 8, 28, 78, 24, openHands, { color: "#3cf0ff", size: 7 }); }
+      function drawHandsChart(g) {
+        g.fillStyle = "rgba(4,0,10,.96)"; g.fillRect(0, 0, W, H);
+        Kit.text(g, "POKER HANDS", W / 2, 22, 14, "#fff", "center", "#3cf0ff");
+        Kit.text(g, "BEST AT THE TOP · BEATS EVERYTHING BELOW IT", W / 2, 44, 6, "#aaa");
+        const top = 58, bottom = H - 76, rowH = Math.min(62, (bottom - top) / CHART.length);
+        const cw = Math.min(26, rowH * 0.62), ch = Math.min(cw * 1.4, rowH - 14);
+        const mine = myChartRow();
+        CHART.forEach(([name, cards], i) => {
+          const y = top + i * rowH;
+          if (i === mine) {
+            g.fillStyle = Math.floor(t * 3) % 2 ? "rgba(255,214,60,.28)" : "rgba(255,214,60,.18)";
+            g.fillRect(6, y - 2, W - 12, rowH - 2);
+            g.strokeStyle = "#ffd63c"; g.lineWidth = 2; g.strokeRect(6, y - 2, W - 12, rowH - 2);
+          }
+          Kit.text(g, String(i + 1), 18, y + rowH / 2 - 2, 9, i === mine ? "#ffd63c" : "#666");
+          cards.forEach((c, k) => card(g, c, 34 + k * (cw + 3), y + (rowH - 2 - ch) / 2, cw, ch));
+          const tx = 34 + 5 * (cw + 3) + 8;
+          Kit.text(g, name, tx, y + rowH / 2 - (i === mine ? 6 : 2), 8, i === mine ? "#ffd63c" : "#fff", "left");
+          if (i === mine) Kit.text(g, "YOU HAVE THIS", tx, y + rowH / 2 + 8, 6, "#ffd63c", "left");
+        });
       }
 
       // ---------------- drawing the table ----------------
@@ -623,7 +678,7 @@
           else if (myTurn) { const toCall = he.current - p0.bet; Kit.text(g, toCall > 0 ? "YOUR TURN: " + toCall + " TO CALL" : "YOUR TURN", W / 2, my.y - 30, 8, "#ff3cc8", "center", "#000"); }
           else Kit.text(g, p0.folded ? "YOU FOLDED" : p0.allIn ? "YOU'RE ALL IN" : he.stage === "next" ? "" : "...", W / 2, H - 40, 8, "#888");
         }
-        Kit.text(g, "HAND " + he.hands + " · TABLES WON " + he.tables, 10, 18, 7, "#888", "left");
+        Kit.text(g, "HAND " + he.hands + " - TABLES WON " + he.tables, 10, 14, 7, "#888", "left");
         drawFlights(g);
         drawMeter(g, "YOUR CHIPS");
         if (he.picker) drawPicker(g);
@@ -636,6 +691,7 @@
         fx.update(dt); banner.update(dt); updateMeter(dt);
         if (over) { overT -= dt; if (overT <= 0) host.gameOver(); return; }
         if (host.arcade && host.pad.dir) { repeatT -= dt; if (repeatT <= 0) { moveFocus(host.pad.dir); repeatT = 0.2; } }
+        if (he.showHands) return; // the table waits while you look at the chart
         if (he.wait > 0) { he.wait -= dt; if (he.wait > 0) return; layoutHE(); } // the deal has finished: show your buttons if it's your turn
         if (he.stage === "next" || he.stage === "result") { newHand(); return; }
         if (he.runout) {
@@ -657,6 +713,7 @@
       function draw(g) {
         g.fillStyle = "#06020e"; g.fillRect(0, 0, W, H);
         drawHE(g);
+        if (he.showHands) drawHandsChart(g);
         drawUI(g);
         fx.draw(g);
         banner.draw(g, W, H);
@@ -700,12 +757,12 @@
         if (over) return;
         if (ev.type === "dir" && ev.dir) { moveFocus(ev.dir); repeatT = 0.35; }
         if (ev.type === "down" && ev.id === "a") { const b = ui[focus]; if (b && b.enabled !== false && b.onTap) b.onTap(); }
-        if (ev.type === "down" && ev.id === "b") { const b = ui.find(x => x.id === "call" || x.id === "confirm"); if (b && b.enabled !== false) b.onTap(); }
+        if (ev.type === "down" && ev.id === "b") { const b = ui.find(x => x.id === "call" || x.id === "confirm" || x.id === "close"); if (b && b.enabled !== false) b.onTap(); }
       }
 
       layoutHE();
       const state = () => ({
-        over, focus, picker: he.picker && { ...he.picker },
+        over, focus, showHands: !!he.showHands, chartRow: myChartRow(), picker: he.picker && { ...he.picker },
         ui: ui.map(b => ({ id: b.id, label: b.label, x: b.x, y: b.y, w: b.w, h: b.h, enabled: b.enabled !== false })),
         meter: { shown: Math.round(meter.shown), target: meter.target, flashing: meter.flash > 0 }, flights: flights.length,
         animating: [...dealt.values()].filter(t0 => t < t0 + 0.5).length,
