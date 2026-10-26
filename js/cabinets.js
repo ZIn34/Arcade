@@ -257,7 +257,7 @@ const CABINETS = [
     pal: { k: "#333333", r: "#ff8a3c", w: "#3cf0ff" },
   },
   {
-    id: "pixelpoker", name: "PIXEL\nPOKER", tagline: "VIDEO POKER\nOR HOLD'EM",
+    id: "pixelpoker", name: "PIXEL\nPOKER", tagline: "TEXAS HOLD'EM\nVS 3 PLAYERS",
     c: "#ffd63c", c2: "#ff3c50", body: "#1a0a2a", marq: "#10001a",
     art: [
       "wwwwwww.....",
