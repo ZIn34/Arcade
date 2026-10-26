@@ -256,4 +256,21 @@ const CABINETS = [
     ],
     pal: { k: "#333333", r: "#ff8a3c", w: "#3cf0ff" },
   },
+  {
+    id: "pixelpoker", name: "PIXEL\nPOKER", tagline: "VIDEO POKER\nOR HOLD'EM",
+    c: "#ffd63c", c2: "#ff3c50", body: "#1a0a2a", marq: "#10001a",
+    art: [
+      "wwwwwww.....",
+      "wAwwwwwrrrr.",
+      "wwwkwwwrwwwr",
+      "wwkkkwwrwrwr",
+      "wkkkkkwrrrwr",
+      "wwwkwwwrwrwr",
+      "wwkkkwwrwwwr",
+      "wwwwwwwrwwHr",
+      ".......rrrrr",
+      "............",
+    ],
+    pal: { w: "#f4f0e8", k: "#111111", A: "#111111", r: "#e0203a", H: "#e0203a" },
+  },
 ];

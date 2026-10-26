@@ -10,7 +10,7 @@ const Coins = (() => {
     starlance: 1000, pixelpile: 1000, gloworm: 100, brickquake: 250,
     vaultrunner: 500, duckdash: 200, cometcrush: 2000,
     skyhopper: 250, turbolane: 500, pulsetap: 1000,
-    bugbash: 200, stackup: 100, neonflipper: 2000, skyshield: 1000, cavecopter: 200,
+    bugbash: 200, stackup: 100, neonflipper: 2000, skyshield: 1000, cavecopter: 200, pixelpoker: 50,
   };
   const DEFAULT_EVERY = 500;
 
