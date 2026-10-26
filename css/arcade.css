@@ -620,3 +620,11 @@ button {
 #play.arcade { padding-bottom: 0; }
 .deck.nostick .deck-buttons { width: 100%; justify-content: space-around; }
 .deck.nobuttons { justify-content: center; }
+
+/* joystick sensitivity picker */
+.hall-sens { position: relative; z-index: 2; display: flex; justify-content: center; margin-top: 6px; }
+.sens-row { display: flex; align-items: center; gap: 4px; }
+.sens-label { font-size: 8px; color: #aaa; margin-right: 6px; }
+.sens-opt { width: 28px; height: 26px; font-size: 9px; color: #888; border: 2px solid #444; border-radius: 3px; background: rgba(0,0,0,.5); }
+.sens-opt.on { color: #000; background: var(--pink); border-color: var(--pink); box-shadow: 0 0 8px rgba(255,60,200,.6); }
+.overlay .sens-row { margin: 4px 0; }

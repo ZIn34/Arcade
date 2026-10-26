@@ -14,6 +14,21 @@ const Deck = (() => {
   const modeListeners = [];
 
   const mode = () => (localStorage.getItem(MODE_KEY) === "arcade" ? "arcade" : "normal");
+
+  // Joystick sensitivity, 1 to 5 (3 to start with). Low: ignores small nudges and needs a big push for
+  // full speed. High: reacts to a small push and reaches full speed sooner.
+  const SENS_KEY = "crexz-arcade.stickSens";
+  const DEAD = [0, 0.25, 0.18, 0.12, 0.07, 0.04], GAIN = [0, 1.0, 1.2, 1.45, 1.8, 2.3];
+  const sens = () => { const n = parseInt(localStorage.getItem(SENS_KEY), 10); return n >= 1 && n <= 5 ? n : 3; };
+  const sensListeners = [];
+  function setSens(n) { localStorage.setItem(SENS_KEY, String(Math.max(1, Math.min(5, n)))); sensListeners.forEach(f => f(sens())); }
+  function onSens(f) { sensListeners.push(f); }
+  // how far the stick is pushed (0..1) turned into how much it counts (0..1) at this sensitivity
+  function curve(raw) {
+    const n = sens(), m = Math.abs(raw);
+    if (m <= DEAD[n]) return 0;
+    return Math.sign(raw) * Math.min(1, ((m - DEAD[n]) / (1 - DEAD[n])) * GAIN[n]);
+  }
   function setMode(m) { localStorage.setItem(MODE_KEY, m === "arcade" ? "arcade" : "normal"); modeListeners.forEach(f => f(mode())); }
   function onMode(f) { modeListeners.push(f); }
 
@@ -72,7 +87,7 @@ const Deck = (() => {
     const d = Math.hypot(dx, dy), max = R * 0.62;
     if (d > max) { dx *= max / d; dy *= max / d; }
     knob.style.transform = `translate(${dx}px, ${dy}px)`;
-    pad.x = dx / max; pad.y = dy / max;
+    pad.x = curve(dx / max); pad.y = curve(dy / max);
     let dir = null;
     if (Math.hypot(pad.x, pad.y) > 0.45) dir = Math.abs(pad.x) > Math.abs(pad.y) ? (pad.x > 0 ? "right" : "left") : (pad.y > 0 ? "down" : "up");
     emit({ type: "stick", x: pad.x, y: pad.y });
@@ -104,5 +119,25 @@ const Deck = (() => {
   }
   function hide() { release(); listener = null; deck.classList.add("hidden"); }
 
-  return { mode, setMode, onMode, setup, release, hide, pad };
+  // A "STICK 1 2 3 4 5" picker, used in the hall and in the pause menu.
+  function sensControl() {
+    const row = document.createElement("div");
+    row.className = "sens-row";
+    const lab = document.createElement("span");
+    lab.className = "sens-label"; lab.textContent = "STICK";
+    row.append(lab);
+    const btns = [];
+    for (let n = 1; n <= 5; n++) {
+      const b = document.createElement("button");
+      b.className = "sens-opt"; b.textContent = String(n); b.dataset.s = String(n);
+      b.setAttribute("aria-label", "Joystick sensitivity " + n);
+      b.addEventListener("click", e => { e.stopPropagation(); setSens(n); Sound.play("move"); });
+      btns.push(b); row.append(b);
+    }
+    const show = () => btns.forEach((b, i) => b.classList.toggle("on", i + 1 === sens()));
+    show(); onSens(show);
+    return row;
+  }
+
+  return { mode, setMode, onMode, sens, setSens, onSens, sensControl, setup, release, hide, pad };
 })();

@@ -265,7 +265,9 @@ const Hall = (() => {
     const m = Deck.mode();
     $("mode-normal").classList.toggle("on", m === "normal");
     $("mode-arcade").classList.toggle("on", m === "arcade");
+    $("hall-sens").classList.toggle("hidden", m !== "arcade"); // the stick setting only matters in Arcade mode
   }
+  $("hall-sens").append(Deck.sensControl());
   $("mode-normal").addEventListener("click", e => { e.stopPropagation(); Deck.setMode("normal"); Sound.play("select"); showMode(); });
   $("mode-arcade").addEventListener("click", e => { e.stopPropagation(); Deck.setMode("arcade"); Sound.play("credit"); showMode(); });
   showMode();

@@ -116,6 +116,7 @@ const Shell = (() => {
     overlay.append(
       el("h2", { class: "neon-yellow", text: "PAUSED" }),
       button("RESUME", "", () => { Sound.play("select"); resume(); }),
+      ...(arcade && game.deck && game.deck.stick !== false ? [Deck.sensControl()] : []),
       button("HOW TO PLAY", "alt", () => { Sound.play("select"); showHowTo(false); }),
       button("BACK TO ARCADE", "alt", exit)
     );
