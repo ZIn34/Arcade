@@ -62,6 +62,7 @@
   document.addEventListener("pointerdown", () => Sound.unlock(), true);
 
   Hall.build();
+  Shop.init();
 
   const power = $("power");
   power.addEventListener("pointerdown", async () => {
@@ -80,7 +81,7 @@
     }).catch(() => {}));
     // A newer arcade has been saved on the phone: switch to it, but never in the middle of a game.
     let pending = false;
-    const inGame = () => !$("play").classList.contains("hidden") || !$("coin").classList.contains("hidden");
+    const inGame = () => ["play", "coin", "shop"].some(id => !$(id).classList.contains("hidden"));
     const reloadSoon = () => { if (!inGame()) location.reload(); else pending = true; };
     navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) reloadSoon(); });
     setInterval(() => { if (pending && !inGame()) location.reload(); }, 1000);

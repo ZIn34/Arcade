@@ -628,3 +628,38 @@ button {
 .sens-opt { width: 28px; height: 26px; font-size: 9px; color: #888; border: 2px solid #444; border-radius: 3px; background: rgba(0,0,0,.5); }
 .sens-opt.on { color: #000; background: var(--pink); border-color: var(--pink); box-shadow: 0 0 8px rgba(255,60,200,.6); }
 .overlay .sens-row { margin: 4px 0; }
+
+/* ---------- the coin shop ---------- */
+.buy-btn { margin-left: 4px; color: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 6px rgba(60,240,255,.4); }
+.coin-out .pix-btn { margin-top: 6px; }
+.shop-panel { border-color: var(--yellow); box-shadow: 0 0 16px var(--yellow); width: 100%; }
+.shop-packs { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.shop-pack {
+  position: relative;
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 14px 12px;
+  border: 2px solid var(--yellow); border-radius: 6px;
+  background: rgba(255,214,60,.08);
+  color: #fff; font-size: 12px;
+}
+.shop-pack .coin-ico { width: 22px; height: 22px; }
+.shop-pack .amt { color: var(--yellow); text-shadow: 0 0 6px var(--yellow); }
+.shop-pack .lbl { font-size: 8px; color: #ccc; }
+.shop-pack .tag { font-size: 7px; color: #000; background: var(--pink); padding: 3px 4px; border-radius: 3px; }
+.shop-pack .price { margin-left: auto; font-size: 13px; color: #000; background: var(--yellow); padding: 6px 8px; border-radius: 4px; }
+.shop-pack:active { transform: scale(.97); }
+.shop-pack:disabled { opacity: .4; }
+.shop-note { color: var(--cyan); }
+.panel p.shop-test { font-size: 8px; color: var(--pink); }
+.shop-toast {
+  position: fixed; z-index: 90; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); transform: translateX(-50%);
+  width: min(320px, 90vw); padding: 14px 12px;
+  background: #0a0014; border: 3px solid var(--yellow); box-shadow: 0 0 16px var(--yellow); border-radius: 6px;
+  font-size: 12px; line-height: 1.8; text-align: center; color: var(--yellow);
+}
+.shop-toast span { font-size: 8px; color: #ddd; }
+.shop-toast .coin-ico { display: inline-block; width: 16px; height: 16px; vertical-align: middle; }
+.hall-coins { flex-wrap: wrap; row-gap: 4px; }
+.hall-coins .days-btn { white-space: nowrap; }
+.hall-coins-note { order: 5; flex-basis: 100%; text-align: center; }
+.hall-coins-note:empty { display: none; }

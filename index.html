@@ -42,7 +42,8 @@
     <button id="btn-mute" class="icon-btn mute-btn" aria-label="Sound on or off"></button>
   </header>
   <div class="hall-coins"><i class="coin-ico"></i><span id="hall-coins">0</span><span class="hall-coins-note" id="hall-coins-note"></span>
-    <button id="btn-days" class="days-btn" aria-label="Most coins in a day">&#9733; BEST DAYS</button></div>
+    <button id="btn-days" class="days-btn" aria-label="Most coins in a day">&#9733; BEST DAYS</button>
+    <button id="btn-buy" class="days-btn buy-btn" data-open-shop aria-label="Buy coins">+ BUY</button></div>
   <div class="mode-switch" role="group" aria-label="Controls">
     <button id="mode-normal" class="mode-opt">NORMAL</button><button id="mode-arcade" class="mode-opt">ARCADE</button>
   </div>
@@ -70,6 +71,7 @@
     <div class="neon-pink">OUT OF COINS</div>
     <div>COME BACK TOMORROW FOR<br>4 FREE COINS</div>
     <div class="coin-timer" id="coin-timer">00:00:00</div>
+    <button id="btn-out-buy" class="pix-btn" data-open-shop>BUY COINS</button>
   </div>
   <div class="coin-hint" id="coin-hint"></div>
   <div class="coin-purse" id="coin-purse">
@@ -108,6 +110,19 @@
   </div>
 </div>
 
+<!-- The coin shop -->
+<div id="shop" class="screen modal hidden">
+  <div class="panel shop-panel">
+    <h2 class="neon-yellow">BUY COINS</h2>
+    <div class="shop-packs" id="shop-packs"></div>
+    <p class="shop-note" id="shop-note"></p>
+    <p class="shop-test hidden" id="shop-test">TEST MODE: NO REAL MONEY</p>
+    <p class="small">Coins are for this phone's arcade only. Payment is handled by Stripe; the arcade never sees your card.</p>
+    <button id="btn-shop-close" class="pix-btn alt">BACK</button>
+  </div>
+</div>
+<div id="shop-toast" class="shop-toast hidden"></div>
+
 <!-- About / credits -->
 <div id="about" class="screen modal hidden">
   <div class="panel">
@@ -116,7 +131,7 @@
     <p class="big">Created by<br><span class="neon-cyan">CREXZ</span><br>CREXZ STUDIOS</p>
     <p class="small">Games, art, music and sound made for CREXZ by Claude. Every game here is original.</p>
     <p class="small">Pixel font: Press Start 2P by CodeMan38 (SIL Open Font License).</p>
-    <p class="small">4 free coins every day, and you win coins back with good scores. No ads.</p>
+    <p class="small">4 free coins every day, and you win coins back with good scores. Coin packs are optional. No ads.</p>
     <button id="btn-about-close" class="pix-btn">OK</button>
   </div>
 </div>
@@ -148,6 +163,7 @@
 <script src="js/games/cavecopter.js"></script>
 <script src="js/games/pixelpoker.js"></script>
 <script src="js/hall.js"></script>
+<script src="js/shop.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
