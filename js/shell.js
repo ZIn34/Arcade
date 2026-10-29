@@ -19,6 +19,14 @@ const Shell = (() => {
   let running = false, paused = false, raf = 0, last = 0, onExit = null;
   let W = 0, H = 0, dpr = 1;
 
+  // A game left unfinished (app closed mid-game) is remembered here and counted the next time the arcade opens.
+  const UNFINISHED_KEY = "crexz-arcade.unfinished";
+  let endedEarly = false;
+  function rememberUnfinished() {
+    if (running && cab && host && host.score > 0) localStorage.setItem(UNFINISHED_KEY, JSON.stringify({ id: cab.id, score: host.score }));
+  }
+  function forgetUnfinished() { localStorage.removeItem(UNFINISHED_KEY); }
+
   const seenKey = id => "crexz-arcade.seen." + id + (arcade && game && game.arcadeHowTo ? ".arcade" : "");
   let arcade = false;
 
@@ -109,6 +117,7 @@ const Shell = (() => {
   function pause() {
     if (!running || paused) return;
     paused = true;
+    rememberUnfinished();
     Deck.release();
     Sound.stopMusic();
     overlay.innerHTML = "";
@@ -118,31 +127,39 @@ const Shell = (() => {
       button("RESUME", "", () => { Sound.play("select"); resume(); }),
       ...(arcade && game.deck && game.deck.stick !== false ? [Deck.sensControl()] : []),
       button("HOW TO PLAY", "alt", () => { Sound.play("select"); showHowTo(false); }),
-      button("BACK TO ARCADE", "alt", exit)
+      button(host && host.score > 0 ? "END GAME" : "BACK TO ARCADE", "alt", quit)
     );
   }
+  // Leaving early still counts: with points on the board it ends like a game over (high score, coins).
+  function quit() {
+    if (running && host && host.score > 0) { paused = false; gameOver(true); }
+    else exit();
+  }
   function resume() {
+    forgetUnfinished();
     overlay.classList.add("hidden");
     overlay.innerHTML = "";
     paused = false;
     if (game.music) Sound.playMusic(game.music, host && host.tempo || 1);
   }
 
-  function gameOver() {
+  function gameOver(quitEarly) {
     if (!running) return;
     running = false;
+    endedEarly = quitEarly === true;
+    forgetUnfinished();
     cancelAnimationFrame(raf);
     Deck.release();
     inst.draw(g, W, H);
     Sound.stopMusic();
-    Sound.play("gameover");
+    Sound.play(endedEarly ? "back" : "gameover");
     const score = host.score;
     // coins back for the score
     won = Coins.earned(cab.id, score);
     Coins.win(won);
     overlay.innerHTML = "";
     overlay.classList.remove("hidden");
-    overlay.append(el("h2", { class: "neon-pink", text: "GAME OVER" }), el("p", { text: "SCORE " + score }), coinsWon());
+    overlay.append(el("h2", { class: "neon-pink", text: endedEarly ? "GAME ENDED" : "GAME OVER" }), el("p", { text: "SCORE " + score }), coinsWon());
     if (Scores.qualifies(cab.id, score)) setTimeout(() => askInitials(score), 700);
     else if (Coins.dayQualifies()) setTimeout(() => askDayInitials(-1), 700);
     else showResults(-1);
@@ -224,7 +241,7 @@ const Shell = (() => {
     });
     again.disabled = have <= 0;
     overlay.append(
-      el("h2", { class: "neon-pink", text: "GAME OVER" }),
+      el("h2", { class: "neon-pink", text: endedEarly ? "GAME ENDED" : "GAME OVER" }),
       el("p", { text: "SCORE " + (host ? host.score : 0) }),
       coinsWon(),
       el("div", { class: "scores-title", text: "HIGH SCORES" }),
@@ -248,6 +265,7 @@ const Shell = (() => {
   }
 
   function exit() {
+    forgetUnfinished();
     running = false;
     paused = false;
     cancelAnimationFrame(raf);
@@ -285,7 +303,22 @@ const Shell = (() => {
 
   $("btn-exit").addEventListener("click", () => { if (running && !paused) { Sound.play("select"); pause(); } else if (!running) exit(); });
   window.addEventListener("resize", () => { if (!$("play").classList.contains("hidden")) fit(); });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) { pause(); rememberUnfinished(); } });
+  window.addEventListener("pagehide", rememberUnfinished);
+
+  // Count a game that was left when the app closed: its score goes on the table under your last initials.
+  function settleUnfinished() {
+    let u = null;
+    try { u = JSON.parse(localStorage.getItem(UNFINISHED_KEY)); } catch (e) { /* ignore */ }
+    forgetUnfinished();
+    if (!u || !Arcade.games[u.id] || !(u.score > 0)) return null;
+    const score = Math.floor(u.score), name = Scores.lastInitials();
+    const place = Scores.qualifies(u.id, score) ? Scores.add(u.id, name, score) : -1;
+    const coins = Coins.earned(u.id, score);
+    Coins.win(coins);
+    if (Coins.dayQualifies()) Coins.addDay(name);
+    return { id: u.id, score, place, coins };
+  }
 
   // ---- tiny DOM helpers ----
   function el(tag, attrs = {}, children = []) {
@@ -302,5 +335,5 @@ const Shell = (() => {
     return b;
   }
 
-  return { open, el, button };
+  return { open, el, button, settleUnfinished };
 })();

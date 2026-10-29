@@ -132,5 +132,5 @@ const Shop = (() => {
     window.addEventListener("online", claimAll);
   }
 
-  return { init, show, claimAll, PACKS };
+  return { init, show, claimAll, toast, PACKS };
 })();

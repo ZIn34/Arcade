@@ -61,6 +61,8 @@
   // Any tap anywhere keeps the audio awake (iPhone can suspend it).
   document.addEventListener("pointerdown", () => Sound.unlock(), true);
 
+  // a game left mid-way when the app last closed still counts
+  const settled = Shell.settleUnfinished();
   Hall.build();
   Shop.init();
 
@@ -70,6 +72,11 @@
     power.classList.add("hidden");
     await runIntro();
     Hall.show();
+    if (settled) {
+      const name = CABINETS.find(c => c.id === settled.id)?.name.replace(/\s+/g, " ") || "";
+      Shop.toast(`LAST GAME COUNTED<br><span>${name}: ${settled.score} POINTS` +
+        (settled.place >= 0 ? ` · #${settled.place + 1} HIGH SCORE` : "") + (settled.coins > 0 ? ` · +${settled.coins} COINS` : "") + "</span>", 6000);
+    }
   }, { once: true });
 
   // Works offline once loaded.
