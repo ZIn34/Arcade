@@ -110,7 +110,7 @@ const Hall = (() => {
     });
     if (best !== current) { markCurrent(best); Sound.play("move"); }
     clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => { aim = null; localStorage.setItem("crexz-arcade.cabinet", String(current)); }, 200);
+    scrollTimer = setTimeout(() => { aim = null; Save.setItem("crexz-arcade.cabinet", String(current)); }, 200);
   }, { passive: true });
 
   // Quick repeated arrow taps step on from where the last tap was heading, not from where the row is mid-glide.
@@ -307,7 +307,7 @@ const Hall = (() => {
     $("hall").classList.remove("hidden");
     shownAt = performance.now();
     showCoins();
-    const saved = parseInt(localStorage.getItem("crexz-arcade.cabinet") || "0", 10) || 0;
+    const saved = parseInt(Save.getItem("crexz-arcade.cabinet") || "0", 10) || 0;
     requestAnimationFrame(() => {
       const c = cards[Math.min(saved, cards.length - 1)].card;
       row.scrollLeft = c.offsetLeft - (row.clientWidth - c.offsetWidth) / 2;

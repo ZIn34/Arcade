@@ -16,13 +16,13 @@ const Coins = (() => {
 
   const today = () => { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); };
 
-  function read() { const n = parseInt(localStorage.getItem(KEY), 10); return Number.isFinite(n) && n >= 0 ? n : 0; }
-  function write(n) { localStorage.setItem(KEY, String(Math.max(0, Math.floor(n)))); listeners.forEach(f => f(read())); }
+  function read() { const n = parseInt(Save.getItem(KEY), 10); return Number.isFinite(n) && n >= 0 ? n : 0; }
+  function write(n) { Save.setItem(KEY, String(Math.max(0, Math.floor(n)))); listeners.forEach(f => f(read())); }
 
   // Called on start-up and whenever the app comes back: a new day tops you up to 4.
   function refill() {
-    if (localStorage.getItem(DAY_KEY) === today()) return false;
-    localStorage.setItem(DAY_KEY, today());
+    if (Save.getItem(DAY_KEY) === today()) return false;
+    Save.setItem(DAY_KEY, today());
     if (read() < DAILY) { write(DAILY); return true; }
     listeners.forEach(f => f(read()));
     return false;
@@ -49,16 +49,16 @@ const Coins = (() => {
 
   // ---- best days: the most coins won from scores in a single day (free daily coins don't count) ----
   const EARN_KEY = "crexz-arcade.dayEarned", BOARD_KEY = "crexz-arcade.dayBoard", BOARD_SIZE = 5;
-  const readJSON = (k, fallback) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fallback : v; } catch (e) { return fallback; } };
+  const readJSON = (k, fallback) => { try { const v = JSON.parse(Save.getItem(k)); return v == null ? fallback : v; } catch (e) { return fallback; } };
   function earnedToday() { const v = readJSON(EARN_KEY, {}); return v && v.d === today() ? v.n : 0; }
   function board() { const b = readJSON(BOARD_KEY, []); return Array.isArray(b) ? b.filter(e => e && typeof e.c === "number").slice(0, BOARD_SIZE) : []; }
-  function saveBoard(b) { b.sort((x, y) => y.c - x.c); localStorage.setItem(BOARD_KEY, JSON.stringify(b.slice(0, BOARD_SIZE))); }
+  function saveBoard(b) { b.sort((x, y) => y.c - x.c); Save.setItem(BOARD_KEY, JSON.stringify(b.slice(0, BOARD_SIZE))); }
   // Coins won for a score: into the wallet, and onto today's tally (today's board entry keeps up by itself).
   function win(n) {
     if (!(n > 0)) return;
     add(n);
     const total = earnedToday() + n;
-    localStorage.setItem(EARN_KEY, JSON.stringify({ d: today(), n: total }));
+    Save.setItem(EARN_KEY, JSON.stringify({ d: today(), n: total }));
     const b = board(), mine = b.find(e => e.d === today());
     if (mine) { mine.c = total; saveBoard(b); }
   }

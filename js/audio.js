@@ -3,7 +3,7 @@
 const Sound = (() => {
   const MUTE_KEY = "crexz-arcade.muted";
   let ctx = null, master = null, sfxBus = null, musicBus = null, noiseBuf = null;
-  let muted = localStorage.getItem(MUTE_KEY) === "1";
+  let muted = Save.getItem(MUTE_KEY) === "1";
   const listeners = [];
 
   function unlock() {
@@ -31,7 +31,7 @@ const Sound = (() => {
   function isMuted() { return muted; }
   function setMuted(m) {
     muted = m;
-    localStorage.setItem(MUTE_KEY, m ? "1" : "0");
+    Save.setItem(MUTE_KEY, m ? "1" : "0");
     if (master) master.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.02);
     listeners.forEach(f => f(m));
   }

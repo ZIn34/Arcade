@@ -642,7 +642,7 @@ button {
   background: rgba(255,214,60,.08);
   color: #fff; font-size: 12px;
 }
-.shop-pack .coin-ico { width: 22px; height: 22px; }
+.shop-pack .coin-ico { width: 22px; height: 22px; flex-shrink: 0; }
 .shop-pack .amt { color: var(--yellow); text-shadow: 0 0 6px var(--yellow); }
 .shop-pack .lbl { font-size: 8px; color: #ccc; }
 .shop-pack .tag { font-size: 7px; color: #000; background: var(--pink); padding: 3px 4px; border-radius: 3px; }
@@ -650,7 +650,6 @@ button {
 .shop-pack:active { transform: scale(.97); }
 .shop-pack:disabled { opacity: .4; }
 .shop-note { color: var(--cyan); }
-.panel p.shop-test { font-size: 8px; color: var(--pink); }
 .shop-toast {
   position: fixed; z-index: 90; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); transform: translateX(-50%);
   width: min(320px, 90vw); padding: 14px 12px;

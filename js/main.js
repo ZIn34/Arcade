@@ -61,36 +61,43 @@
   // Any tap anywhere keeps the audio awake (iPhone can suspend it).
   document.addEventListener("pointerdown", () => Sound.unlock(), true);
 
-  // a game left mid-way when the app last closed still counts
-  const settled = Shell.settleUnfinished();
-  Hall.build();
-  Shop.init();
+  // On CrazyGames their SDK starts first (it loads the player's saved coins and scores).
+  (async () => {
+    await Platform.init();
+    if (Platform.crazy) Sound.setMuted(Save.getItem("crexz-arcade.muted") === "1");
 
-  const power = $("power");
-  power.addEventListener("pointerdown", async () => {
-    Sound.unlock();
-    power.classList.add("hidden");
-    await runIntro();
-    Hall.show();
-    if (settled) {
-      const name = CABINETS.find(c => c.id === settled.id)?.name.replace(/\s+/g, " ") || "";
-      Shop.toast(`LAST GAME COUNTED<br><span>${name}: ${settled.score} POINTS` +
-        (settled.place >= 0 ? ` · #${settled.place + 1} HIGH SCORE` : "") + (settled.coins > 0 ? ` · +${settled.coins} COINS` : "") + "</span>", 6000);
+    // a game left mid-way when the app last closed still counts
+    const settled = Shell.settleUnfinished();
+    Hall.build();
+    Shop.init();
+
+    const power = $("power");
+    power.addEventListener("pointerdown", async () => {
+      Sound.unlock();
+      power.classList.add("hidden");
+      await runIntro();
+      Hall.show();
+      if (settled) {
+        const name = CABINETS.find(c => c.id === settled.id)?.name.replace(/\s+/g, " ") || "";
+        Shop.toast(`LAST GAME COUNTED<br><span>${name}: ${settled.score} POINTS` +
+          (settled.place >= 0 ? ` · #${settled.place + 1} HIGH SCORE` : "") + (settled.coins > 0 ? ` · +${settled.coins} COINS` : "") + "</span>", 6000);
+      }
+    }, { once: true });
+
+    // Works offline once loaded (not on CrazyGames, which hosts the game itself).
+    if (!Platform.crazy && "serviceWorker" in navigator && location.protocol !== "file:") {
+      const hadController = !!navigator.serviceWorker.controller;
+      const register = () => navigator.serviceWorker.register("sw.js").then(reg => {
+        // look for a newer arcade whenever the app comes back to the front
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
+      }).catch(() => {});
+      if (document.readyState === "complete") register(); else window.addEventListener("load", register);
+      // A newer arcade has been saved on the phone: switch to it, but never in the middle of a game.
+      let pending = false;
+      const inGame = () => ["play", "coin", "shop"].some(id => !$(id).classList.contains("hidden"));
+      const reloadSoon = () => { if (!inGame()) location.reload(); else pending = true; };
+      navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) reloadSoon(); });
+      setInterval(() => { if (pending && !inGame()) location.reload(); }, 1000);
     }
-  }, { once: true });
-
-  // Works offline once loaded.
-  if ("serviceWorker" in navigator && location.protocol !== "file:") {
-    const hadController = !!navigator.serviceWorker.controller;
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").then(reg => {
-      // look for a newer arcade whenever the app comes back to the front
-      document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
-    }).catch(() => {}));
-    // A newer arcade has been saved on the phone: switch to it, but never in the middle of a game.
-    let pending = false;
-    const inGame = () => ["play", "coin", "shop"].some(id => !$(id).classList.contains("hidden"));
-    const reloadSoon = () => { if (!inGame()) location.reload(); else pending = true; };
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) reloadSoon(); });
-    setInterval(() => { if (pending && !inGame()) location.reload(); }, 1000);
-  }
+  })();
 })();

@@ -8,10 +8,8 @@ On iPhone, open the link in Safari, tap **Share**, then **Add to Home Screen**. 
 
 Free to play: 4 free coins every day, and good scores win coins back. No ads. See [CREDITS.md](CREDITS.md).
 
-## Coin packs (optional)
+## CrazyGames version
 
-Players can buy coin packs: 100 coins for $1, 300 for $2, 1,000 for $5. Payment happens on Stripe's own checkout page; the arcade never sees card details.
+`python tools/make_crazygames.py` makes `dist/crazygames.zip`, the copy to upload to CrazyGames. It adds the CrazyGames SDK; there the arcade saves coins and scores to the player's CrazyGames account and reports gameplay start/stop.
 
-- `supabase/functions/coins` is the small server (Supabase project `crexz-arcade`). It makes the checkout page and only hands coins out after Stripe confirms the payment, once per payment.
-- `supabase/purchases.sql` creates the table that remembers each purchase.
-- The shop says "opens soon" until the Stripe secret key is saved in Supabase: Edge Functions → Secrets → `STRIPE_SECRET_KEY`. Use a `sk_test_` key first (the shop shows TEST MODE, no real money), then the live key.
+Coin packs are sold only on CrazyGames (an invite-only feature that runs through their Xsolla store): 100 coins for $1, 300 for $2, 1,000 for $5. Create three consumable items in the Xsolla store with these item ids (SKUs): `coins_100`, `coins_300`, `coins_1000`. Until they exist the shop says "opens soon". After a purchase the arcade uses up the pack from the player's inventory and adds its coins, so each pack counts once.

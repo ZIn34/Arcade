@@ -1,11 +1,11 @@
-// High scores, kept on the phone (localStorage). Each game keeps its top 5 with 3-letter initials.
+// High scores, kept on the phone (or in the CrazyGames save there). Each game keeps its top 5 with 3-letter initials.
 const Scores = (() => {
   const KEEP = 5;
   const key = id => "crexz-arcade.scores." + id;
 
   function list(id) {
     try {
-      const v = JSON.parse(localStorage.getItem(key(id)) || "[]");
+      const v = JSON.parse(Save.getItem(key(id)) || "[]");
       return Array.isArray(v) ? v.filter(e => e && typeof e.s === "number").slice(0, KEEP) : [];
     } catch (e) { return []; }
   }
@@ -23,13 +23,13 @@ const Scores = (() => {
     if (i < 0) i = l.length;
     if (i >= KEEP) return -1;
     l.splice(i, 0, entry);
-    localStorage.setItem(key(id), JSON.stringify(l.slice(0, KEEP)));
+    Save.setItem(key(id), JSON.stringify(l.slice(0, KEEP)));
     return i;
   }
 
   const LAST_KEY = "crexz-arcade.lastInitials";
-  function lastInitials() { return (localStorage.getItem(LAST_KEY) || "AAA").slice(0, 3); }
-  function setLastInitials(n) { localStorage.setItem(LAST_KEY, n); }
+  function lastInitials() { return (Save.getItem(LAST_KEY) || "AAA").slice(0, 3); }
+  function setLastInitials(n) { Save.setItem(LAST_KEY, n); }
 
   return { KEEP, list, best, qualifies, add, lastInitials, setLastInitials };
 })();

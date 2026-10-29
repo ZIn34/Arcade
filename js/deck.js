@@ -13,15 +13,15 @@ const Deck = (() => {
   let listener = null, stickId = null;
   const modeListeners = [];
 
-  const mode = () => (localStorage.getItem(MODE_KEY) === "arcade" ? "arcade" : "normal");
+  const mode = () => (Save.getItem(MODE_KEY) === "arcade" ? "arcade" : "normal");
 
   // Joystick sensitivity, 1 to 5 (3 to start with). Low: ignores small nudges and needs a big push for
   // full speed. High: reacts to a small push and reaches full speed sooner.
   const SENS_KEY = "crexz-arcade.stickSens";
   const DEAD = [0, 0.25, 0.18, 0.12, 0.07, 0.04], GAIN = [0, 1.0, 1.2, 1.45, 1.8, 2.3];
-  const sens = () => { const n = parseInt(localStorage.getItem(SENS_KEY), 10); return n >= 1 && n <= 5 ? n : 3; };
+  const sens = () => { const n = parseInt(Save.getItem(SENS_KEY), 10); return n >= 1 && n <= 5 ? n : 3; };
   const sensListeners = [];
-  function setSens(n) { localStorage.setItem(SENS_KEY, String(Math.max(1, Math.min(5, n)))); sensListeners.forEach(f => f(sens())); }
+  function setSens(n) { Save.setItem(SENS_KEY, String(Math.max(1, Math.min(5, n)))); sensListeners.forEach(f => f(sens())); }
   function onSens(f) { sensListeners.push(f); }
   // how far the stick is pushed (0..1) turned into how much it counts (0..1) at this sensitivity
   function curve(raw) {
@@ -29,7 +29,7 @@ const Deck = (() => {
     if (m <= DEAD[n]) return 0;
     return Math.sign(raw) * Math.min(1, ((m - DEAD[n]) / (1 - DEAD[n])) * GAIN[n]);
   }
-  function setMode(m) { localStorage.setItem(MODE_KEY, m === "arcade" ? "arcade" : "normal"); modeListeners.forEach(f => f(mode())); }
+  function setMode(m) { Save.setItem(MODE_KEY, m === "arcade" ? "arcade" : "normal"); modeListeners.forEach(f => f(mode())); }
   function onMode(f) { modeListeners.push(f); }
 
   function emit(ev) { if (listener) listener(ev); }

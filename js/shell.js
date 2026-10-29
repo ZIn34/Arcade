@@ -23,9 +23,9 @@ const Shell = (() => {
   const UNFINISHED_KEY = "crexz-arcade.unfinished";
   let endedEarly = false;
   function rememberUnfinished() {
-    if (running && cab && host && host.score > 0) localStorage.setItem(UNFINISHED_KEY, JSON.stringify({ id: cab.id, score: host.score }));
+    if (running && cab && host && host.score > 0) Save.setItem(UNFINISHED_KEY, JSON.stringify({ id: cab.id, score: host.score }));
   }
-  function forgetUnfinished() { localStorage.removeItem(UNFINISHED_KEY); }
+  function forgetUnfinished() { Save.removeItem(UNFINISHED_KEY); }
 
   const seenKey = id => "crexz-arcade.seen." + id + (arcade && game && game.arcadeHowTo ? ".arcade" : "");
   let arcade = false;
@@ -55,7 +55,7 @@ const Shell = (() => {
     $("hud-hi").textContent = Scores.best(cab.id);
     setScoreText(0);
     fit();
-    if (!localStorage.getItem(seenKey(cab.id)) && game.howTo) showHowTo(true);
+    if (!Save.getItem(seenKey(cab.id)) && game.howTo) showHowTo(true);
     else start();
   }
 
@@ -67,7 +67,7 @@ const Shell = (() => {
       el("p", { class: "neon-yellow", text: "HOW TO PLAY" }),
       el("ul", {}, (arcade && game.arcadeHowTo ? game.arcadeHowTo : game.howTo).map(line => el("li", { text: line }))),
       button(first ? "GOT IT!" : "BACK", "", () => {
-        localStorage.setItem(seenKey(cab.id), "1");
+        Save.setItem(seenKey(cab.id), "1");
         Sound.play("select");
         if (first) start(); else resume();
       })
@@ -97,6 +97,7 @@ const Shell = (() => {
     if (inst.resize) inst.resize(W, H);
     running = true; paused = false;
     Sound.play("start");
+    Platform.gameplay(true);
     if (game.music) Sound.playMusic(game.music); else Sound.stopMusic();
     last = performance.now();
     cancelAnimationFrame(raf);
@@ -117,6 +118,7 @@ const Shell = (() => {
   function pause() {
     if (!running || paused) return;
     paused = true;
+    Platform.gameplay(false);
     rememberUnfinished();
     Deck.release();
     Sound.stopMusic();
@@ -137,6 +139,7 @@ const Shell = (() => {
   }
   function resume() {
     forgetUnfinished();
+    Platform.gameplay(true);
     overlay.classList.add("hidden");
     overlay.innerHTML = "";
     paused = false;
@@ -146,6 +149,7 @@ const Shell = (() => {
   function gameOver(quitEarly) {
     if (!running) return;
     running = false;
+    Platform.gameplay(false);
     endedEarly = quitEarly === true;
     forgetUnfinished();
     cancelAnimationFrame(raf);
@@ -266,6 +270,7 @@ const Shell = (() => {
 
   function exit() {
     forgetUnfinished();
+    Platform.gameplay(false);
     running = false;
     paused = false;
     cancelAnimationFrame(raf);
@@ -309,7 +314,7 @@ const Shell = (() => {
   // Count a game that was left when the app closed: its score goes on the table under your last initials.
   function settleUnfinished() {
     let u = null;
-    try { u = JSON.parse(localStorage.getItem(UNFINISHED_KEY)); } catch (e) { /* ignore */ }
+    try { u = JSON.parse(Save.getItem(UNFINISHED_KEY)); } catch (e) { /* ignore */ }
     forgetUnfinished();
     if (!u || !Arcade.games[u.id] || !(u.score > 0)) return null;
     const score = Math.floor(u.score), name = Scores.lastInitials();
