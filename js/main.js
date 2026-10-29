@@ -1,4 +1,4 @@
-// Starts the arcade: tap to start, the CREXZ Studios logo intro, then the hall.
+// Starts the arcade: tap to start, the CREXZ Studios logo intro, then the hall (on CrazyGames: straight into a game).
 (() => {
   const $ = id => document.getElementById(id);
 
@@ -62,6 +62,8 @@
   document.addEventListener("pointerdown", () => Sound.unlock(), true);
 
   // On CrazyGames their SDK starts first (it loads the player's saved coins and scores).
+  // (the CrazyGames copy never shows TAP TO START, even while their SDK is still loading)
+  if (window.CrazyGames) $("power").classList.add("hidden");
   (async () => {
     await Platform.init();
     if (Platform.crazy) Sound.setMuted(Save.getItem("crexz-arcade.muted") === "1");
@@ -71,18 +73,30 @@
     Hall.build();
     Shop.init();
 
+    function showSettled() {
+      if (!settled) return;
+      const name = CABINETS.find(c => c.id === settled.id)?.name.replace(/\s+/g, " ") || "";
+      Shop.toast(`LAST GAME COUNTED<br><span>${name}: ${settled.score} POINTS` +
+        (settled.place >= 0 ? ` · #${settled.place + 1} HIGH SCORE` : "") + (settled.coins > 0 ? ` · +${settled.coins} COINS` : "") + "</span>", 6000);
+    }
+
     const power = $("power");
-    power.addEventListener("pointerdown", async () => {
-      Sound.unlock();
+    if (Platform.crazy) {
+      // CrazyGames: no tap-to-start or logo intro, players land in a game (sound wakes on their first touch)
       power.classList.add("hidden");
-      await runIntro();
       Hall.show();
-      if (settled) {
-        const name = CABINETS.find(c => c.id === settled.id)?.name.replace(/\s+/g, " ") || "";
-        Shop.toast(`LAST GAME COUNTED<br><span>${name}: ${settled.score} POINTS` +
-          (settled.place >= 0 ? ` · #${settled.place + 1} HIGH SCORE` : "") + (settled.coins > 0 ? ` · +${settled.coins} COINS` : "") + "</span>", 6000);
-      }
-    }, { once: true });
+      Hall.quickPlay();
+      showSettled();
+    } else {
+      power.classList.remove("hidden");
+      power.addEventListener("pointerdown", async () => {
+        Sound.unlock();
+        power.classList.add("hidden");
+        await runIntro();
+        Hall.show();
+        showSettled();
+      }, { once: true });
+    }
 
     // Works offline once loaded (not on CrazyGames, which hosts the game itself).
     if (!Platform.crazy && "serviceWorker" in navigator && location.protocol !== "file:") {

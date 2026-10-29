@@ -316,5 +316,14 @@ const Hall = (() => {
     Sound.playMusic("hall");
   }
 
-  return { build, show, refreshScreens };
+  // Straight into a game (CrazyGames wants new players playing at once): the last cabinet played, or the
+  // first, paid with a coin as usual. With no coins left you stay in the hall.
+  function quickPlay() {
+    if (!Coins.spend()) return false;
+    const saved = parseInt(Save.getItem("crexz-arcade.cabinet") || "0", 10) || 0;
+    Shell.open(CABINETS[Math.min(saved, CABINETS.length - 1)], backToHall);
+    return true;
+  }
+
+  return { build, show, refreshScreens, quickPlay };
 })();
